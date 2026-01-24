@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE PYTHON HUNTER [ULTIMATE]</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    
+    <div class="crt-overlay"></div>
+    <div class="scanline"></div>
+
+    <div class="main-container">
+        
+        <section id="menu-scene" class="scene active">
+            <h1 class="glitch-title" data-text="PYTHON HUNTER">PYTHON HUNTER</h1>
+            <div class="terminal-box">
+                <p>> SYSTEM CHECK... OK</p>
+                <p>> CONNECTING TO SERVER... [CS_KKU]</p>
+                <p>> PLAYER DETECTED.</p>
+                <br>
+                <button class="cyber-btn" onclick="game.start()">[ INITIATE_HUNT_PROTOCOL ]</button>
+                <button class="cyber-btn" onclick="game.showTutorial()">[ TACTICAL_MANUAL ]</button>
+            </div>
+            <p class="credit">DEV: NATTHAPHON & KONGPOP</p>
+        </section>
+
+        <section id="tutorial-scene" class="scene hidden">
+            <h2 class="glitch-title">TACTICAL MANUAL</h2>
+            <div class="terminal-box" style="text-align: left; padding: 20px; border: 1px solid #0f0;">
+                <p>>> OBJECTIVE: กำจัด Bug โดยการเติมโค้ด Python ให้ถูกต้อง</p>
+                <br>
+                <p>>> CONTROLS:</p>
+                <ul style="list-style: none; padding-left: 10px; color: #ccc;">
+                    <li>[TYPE] พิมพ์คำตอบในช่องว่าง</li>
+                    <li>[ENTER] โจมตี (Attack)</li>
+                </ul>
+                <br>
+                <p>>> SURVIVAL GUIDE:</p>
+                <ul style="list-style: none; padding-left: 10px; color: #ccc;">
+                    <li>❤️ <span style="color:red">HP</span>: ลดลงเมื่อตอบผิด</li>
+                    <li>⏳ <span style="color:yellow">TIME</span>: เวลาหมด = ภารกิจล้มเหลว</li>
+                    <li>🔥 <span style="color:orange">COMBO</span>: ตอบถูกติดกัน คะแนนคูณเพิ่ม</li>
+                </ul>
+            </div>
+            <br>
+            <button class="cyber-btn" onclick="game.switchScene('menu')">[ BACK_TO_BASE ]</button>
+        </section>
+
+        <section id="game-scene" class="scene hidden">
+            <div class="hud-top">
+                <div class="hud-box hp-box">
+                    <span>INTEGRITY (HP)</span>
+                    <div class="hp-bar-bg"><div id="player-hp-bar" class="hp-bar-fill"></div></div>
+                </div>
+                <div class="hud-box score-box">
+                    <span>SCORE</span>
+                    <h2 id="score-display">00000</h2>
+                </div>
+                <div class="hud-box timer-box">
+                    <span>TIME</span>
+                    <div id="timer-display">60</div>
+                </div>
+            </div>
+
+            <div class="battle-arena">
+                <div class="monster-wrapper">
+                    <div id="monster-sprite" class="monster-base">
+                        <div class="m-body">
+                            <div class="m-eye"></div>
+                            <div class="m-aura"></div>
+                        </div>
+                    </div>
+                    <div class="damage-text" id="damage-text"></div>
+                </div>
+            </div>
+
+            <div class="console-wrapper">
+                <div class="console-header">
+                    <span>>> MISSION_LOG: <span id="mission-text">Waiting...</span></span>
+                    <span id="combo-display" class="combo hidden">COMBO x0</span>
+                </div>
+                <div class="code-editor">
+                    <pre id="code-display">print("Hello World")</pre>
+                </div>
+                <div class="input-zone">
+                    <span class="prompt">root@hunter:~#</span>
+                    <input type="text" id="player-input" autocomplete="off" placeholder="Type command here...">
+                    <button id="attack-btn" class="attack-btn">EXECUTE</button>
+                </div>
+                <div class="power-ups">
+                    <button onclick="game.usePotion()" class="skill-btn" id="btn-potion">REPAIR_KIT (3)</button>
+                    <button onclick="game.useHint()" class="skill-btn" id="btn-hint">DECRYPT_KEY (3)</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="gameover-scene" class="scene hidden">
+            <h1 class="danger-text" style="color: red; font-size: 3rem;">SYSTEM FAILURE</h1>
+            <div class="result-box" style="border: 2px solid red; padding: 20px; margin: 20px;">
+                <p>FINAL SCORE: <span id="final-score">0</span></p>
+                <p>RANK: <span id="final-rank">NOVICE</span></p>
+            </div>
+            <button class="cyber-btn" onclick="location.reload()">[ REBOOT_SYSTEM ]</button>
+        </section>
+    </div>
+
+    <script src="questions.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
