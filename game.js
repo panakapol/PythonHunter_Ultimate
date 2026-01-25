@@ -32,15 +32,22 @@ function drawMatrix() {
 setInterval(drawMatrix, 50);
 
 /* =========================================
-   PART 2: AUDIO SYNTHESIZER
+   PART 2: AUDIO SYNTHESIZER (With Mute)
    ========================================= */
 class SoundSys {
     constructor() {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.muted = false; // สถานะปิดเสียง
+    }
+
+    toggleMute() {
+        this.muted = !this.muted;
+        return this.muted;
     }
 
     playTone(freq, type, duration, vol = 0.1) {
-        if(this.ctx.state === 'suspended') this.ctx.resume();
+        if (this.muted) return; // ถ้าปิดเสียงอยู่ ไม่ต้องเล่น
+        if (this.ctx.state === 'suspended') this.ctx.resume();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         
@@ -59,7 +66,6 @@ class SoundSys {
     playStart() { 
         this.playTone(400, 'square', 0.1); 
         setTimeout(() => this.playTone(600, 'square', 0.1), 100); 
-        setTimeout(() => this.playTone(800, 'square', 0.3), 200);
     }
     playCorrect() { 
         this.playTone(800, 'sine', 0.1); 
@@ -94,7 +100,6 @@ function spawnParticles(x, y) {
         p.style.setProperty('--ty', `${ty}px`);
         
         p.style.background = Math.random() > 0.5 ? '#0f0' : '#fff';
-
         container.appendChild(p);
         setTimeout(() => p.remove(), 500); 
     }
@@ -105,9 +110,10 @@ function spawnParticles(x, y) {
    ========================================= */
 class GameEngine {
     constructor() {
+        this.playerName = "PLAYER";
         this.score = 0;
-        this.highScore = parseInt(localStorage.getItem('pythonHunter_highScore')) || 0;
         this.hp = 100;
+        this.selectedTime = 60; // Default time
         this.timer = 60;
         this.combo = 0;
         this.hints = 3;
@@ -117,13 +123,12 @@ class GameEngine {
         this.isPlaying = false;
         this.timerInterval = null;
         this.sessionHistory = [];
+        this.leaderboard = JSON.parse(localStorage.getItem('pythonHunter_leaderboard')) || [];
         this.sound = new SoundSys();
 
         this.ui = {
             hpBar: document.getElementById('player-hp-bar'),
             score: document.getElementById('score-display'),
-            highScore: document.getElementById('highscore-display'),
-            menuHighScore: document.getElementById('menu-highscore'),
             timer: document.getElementById('timer-display'),
             code: document.getElementById('code-display'),
             mission: document.getElementById('mission-text'),
@@ -134,19 +139,27 @@ class GameEngine {
             btnPotion: document.getElementById('btn-potion'),
             btnSkip: document.getElementById('btn-skip'),
             reviewBox: document.getElementById('review-box'),
+            soundBtn: document.getElementById('sound-toggle'), // ปุ่มเสียง
+            nameInput: document.getElementById('player-name-input'),
+            currentPlayer: document.getElementById('current-player-display'),
+            leaderboardBody: document.getElementById('leaderboard-body'),
+            topPlayerName: document.getElementById('top-player-name'),
+            menuHighScore: document.getElementById('menu-highscore'),
+            finalName: document.getElementById('final-name'),
+            finalScore: document.getElementById('final-score'),
+            finalRank: document.getElementById('final-rank'),
             scenes: {
                 menu: document.getElementById('menu-scene'),
                 game: document.getElementById('game-scene'),
                 over: document.getElementById('gameover-scene'),
-                tutorial: document.getElementById('tutorial-scene')
-            },
-            finalScore: document.getElementById('final-score'),
-            finalRank: document.getElementById('final-rank'),
-            finalHighScore: document.getElementById('final-highscore')
+                tutorial: document.getElementById('tutorial-scene'),
+                leaderboard: document.getElementById('leaderboard-scene')
+            }
         };
 
-        this.updateHighScoreDisplay();
+        this.updateLeaderboardDisplay();
         
+        // Events
         this.ui.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.checkAnswer();
             else this.sound.playType();
@@ -159,6 +172,34 @@ class GameEngine {
         });
 
         document.getElementById('attack-btn').addEventListener('click', () => this.checkAnswer());
+        
+        // Sound Toggle Event
+        this.ui.soundBtn.addEventListener('click', () => {
+            const isMuted = this.sound.toggleMute();
+            this.ui.soundBtn.innerText = isMuted ? "🔇 OFF" : "🔊 ON";
+            this.ui.soundBtn.classList.toggle('sound-off', isMuted);
+        });
+    }
+
+    // ตั้งค่าเวลาจากหน้าเมนู
+    setTime(seconds) {
+        this.selectedTime = seconds;
+        // Update UI Button states
+        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        this.sound.playStart();
+    }
+
+    // ตรวจสอบชื่อก่อนเริ่ม
+    validateAndStart() {
+        const name = this.ui.nameInput.value.trim();
+        if (!name) {
+            alert("⚠️ PLEASE IDENTIFY YOURSELF! (กรุณากรอกชื่อ)");
+            this.ui.nameInput.focus();
+            return;
+        }
+        this.playerName = name.toUpperCase();
+        this.start();
     }
 
     start() {
@@ -172,6 +213,11 @@ class GameEngine {
     }
 
     showTutorial() { this.switchScene('tutorial'); }
+    
+    showLeaderboard() {
+        this.renderLeaderboardTable();
+        this.switchScene('leaderboard');
+    }
 
     switchScene(sceneName) {
         Object.values(this.ui.scenes).forEach(el => { if(el) { el.classList.add('hidden'); el.classList.remove('active'); } });
@@ -181,15 +227,17 @@ class GameEngine {
     resetStats() {
         this.score = 0;
         this.hp = 100;
-        this.timer = 60;
+        this.timer = this.selectedTime; // ใช้เวลาที่เลือกมา
         this.combo = 0;
         this.hints = 3;
         this.potions = 3;
         this.skips = 3;
         this.sessionHistory = [];
-        this.ui.btnHint.innerText = `HINT(${this.hints})`;
+        
+        this.ui.currentPlayer.innerText = this.playerName;
+        this.ui.btnHint.innerText = `HINT(-50)`;
         this.ui.btnPotion.innerText = `HP(${this.potions})`;
-        this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
+        this.ui.btnSkip.innerText = `SKIP(-100)`;
         this.ui.btnHint.disabled = false;
         this.ui.btnPotion.disabled = false;
         this.ui.btnSkip.disabled = false;
@@ -230,7 +278,7 @@ class GameEngine {
     typewriterEffect(text, element) {
         element.innerHTML = '';
         let i = 0;
-        const speed = 15; 
+        const speed = 10; 
         const type = () => {
             if (i < text.length) {
                 element.innerHTML += text.charAt(i);
@@ -257,7 +305,7 @@ class GameEngine {
         this.combo++;
         const bonus = (this.combo * 10) + (this.currentQ.level * 20);
         this.score += 100 + bonus;
-        this.timer = Math.min(60, this.timer + 5);
+        // ไม่บวกเวลาเพิ่มแล้ว เพราะเรา Fix เวลาเล่น
         
         this.showDamage(`+${100 + bonus}`, 'critical');
         this.ui.input.classList.add('valid');
@@ -287,9 +335,12 @@ class GameEngine {
         if (this.hints > 0) {
             this.sound.playStart();
             this.hints--;
+            this.score = Math.max(0, this.score - 50); // หัก 50 แต้ม
             this.ui.btnHint.innerText = `HINT(${this.hints})`;
             this.ui.input.value = this.currentQ.ans.substring(0, 1);
             this.ui.input.focus();
+            this.showDamage("-50 SCORE", 'danger');
+            this.updateHUD(); // อัปเดตคะแนน
             if (this.hints === 0) this.ui.btnHint.disabled = true;
         }
     }
@@ -310,9 +361,11 @@ class GameEngine {
         if (this.skips > 0) {
             this.sound.playStart();
             this.skips--;
+            this.score = Math.max(0, this.score - 100); // หัก 100 แต้ม
             this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
-            this.showDamage("SKIPPED", 'critical');
+            this.showDamage("SKIPPED (-100)", 'danger');
             this.nextTurn();
+            this.updateHUD(); // อัปเดตคะแนน
             if (this.skips === 0) this.ui.btnSkip.disabled = true;
         }
     }
@@ -340,11 +393,45 @@ class GameEngine {
         }
     }
 
-    updateHighScoreDisplay() {
-        const text = this.highScore.toString().padStart(5, '0');
-        this.ui.menuHighScore.innerText = text;
-        this.ui.highScore.innerText = text;
-        if(this.ui.finalHighScore) this.ui.finalHighScore.innerText = text;
+    // อัปเดต Leaderboard ใน LocalStorage
+    saveScoreToLeaderboard() {
+        // เพิ่มข้อมูลผู้เล่นใหม่ลง Array
+        this.leaderboard.push({
+            name: this.playerName,
+            score: this.score,
+            timeMode: this.selectedTime
+        });
+
+        // เรียงลำดับจากมากไปน้อย
+        this.leaderboard.sort((a, b) => b.score - a.score);
+
+        // เก็บแค่ Top 10
+        this.leaderboard = this.leaderboard.slice(0, 10);
+
+        // บันทึกลงเครื่อง
+        localStorage.setItem('pythonHunter_leaderboard', JSON.stringify(this.leaderboard));
+    }
+
+    updateLeaderboardDisplay() {
+        // โชว์คนเก่งสุดในหน้าเมนู
+        if (this.leaderboard.length > 0) {
+            this.ui.topPlayerName.innerText = this.leaderboard[0].name;
+            this.ui.menuHighScore.innerText = this.leaderboard[0].score;
+        }
+    }
+
+    renderLeaderboardTable() {
+        this.ui.leaderboardBody.innerHTML = '';
+        this.leaderboard.forEach((player, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${player.name}</td>
+                <td style="color:#0f0;">${player.score}</td>
+                <td>${player.timeMode}s</td>
+            `;
+            this.ui.leaderboardBody.appendChild(row);
+        });
     }
 
     gameOver() {
@@ -352,31 +439,26 @@ class GameEngine {
         this.isPlaying = false;
         clearInterval(this.timerInterval);
         
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('pythonHunter_highScore', this.highScore);
-            this.updateHighScoreDisplay();
-        }
+        this.saveScoreToLeaderboard();
+        this.updateLeaderboardDisplay();
 
+        this.ui.finalName.innerText = this.playerName;
         this.ui.finalScore.innerText = this.score;
-        this.ui.finalHighScore.innerText = this.highScore;
         
         let rank = "BEGINNER";
         if(this.score > 1000) rank = "INTERMEDIATE";
         if(this.score > 3000) rank = "PYTHON MASTER";
         
         this.ui.finalRank.innerText = rank;
-        this.generateReview(); // เรียกฟังก์ชันสร้างเฉลย
+        this.generateReview(); 
         this.switchScene('over');
     }
 
-    // === จุดที่แก้ไข: เพิ่มการแสดง Explanation ===
     generateReview() {
         this.ui.reviewBox.innerHTML = ''; 
         this.sessionHistory.forEach((q, index) => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'review-item';
-            // ตรงนี้ครับที่เพิ่มบรรทัดสุดท้ายเข้ามา
             itemDiv.innerHTML = `
                 <div style="color: #fff; margin-bottom: 2px;">${index + 1}. ${q.text}</div>
                 <div class="review-code">${q.code.replace('____', '<span style="color:#f00">____</span>')}</div>

@@ -21,28 +21,32 @@ body {
     align-items: center;
 }
 
+/* --- SOUND TOGGLE --- */
+.sound-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 200;
+    border: 1px solid var(--neon-green);
+    background: black;
+    color: var(--neon-green);
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.sound-btn:hover { background: var(--neon-green); color: black; }
+.sound-off { color: #555; border-color: #555; }
+
 /* VISUAL EFFECTS */
 #matrix-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.2; }
 .crt-overlay { position: absolute; inset: 0; background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%); z-index: 99; pointer-events: none; }
 .scanline { width: 100%; height: 100%; position: absolute; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 4px; z-index: 98; pointer-events: none; }
 
-/* CRT Turn On Animation */
-@keyframes turnOn {
-    0% { transform: scale(1, 0.002); opacity: 0; filter: brightness(3); }
-    30% { transform: scale(1, 0.002); opacity: 1; }
-    50% { transform: scale(1, 1); filter: brightness(3); }
-    100% { transform: scale(1, 1); filter: brightness(1); }
-}
-.turn-on-animation { animation: turnOn 0.4s ease-out forwards; }
-
 /* PARTICLES */
 #particles-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 95; }
 .particle {
-    position: absolute;
-    width: 6px; height: 6px;
-    background: var(--neon-green);
-    box-shadow: 0 0 5px var(--neon-green);
-    animation: particleFly 0.5s ease-out forwards;
+    position: absolute; width: 6px; height: 6px; background: var(--neon-green);
+    box-shadow: 0 0 5px var(--neon-green); animation: particleFly 0.5s ease-out forwards;
 }
 @keyframes particleFly {
     0% { opacity: 1; transform: translate(0, 0) scale(1); }
@@ -51,17 +55,38 @@ body {
 
 /* LAYOUT */
 .main-container {
-    position: relative;
-    z-index: 100;
-    width: 95%; max-width: 800px;
-    height: 100vh;
+    position: relative; z-index: 100;
+    width: 95%; max-width: 800px; height: 100vh;
     display: flex; flex-direction: column; justify-content: center;
-    padding: 10px;
-    transition: filter 0.2s;
+    padding: 10px; transition: filter 0.2s;
 }
 
 .scene { display: none; text-align: center; width: 100%; }
 .scene.active { display: block; animation: fadeIn 0.3s; }
+
+/* --- SETTINGS BOX (NEW) --- */
+.settings-box {
+    text-align: left; margin-bottom: 20px; border-bottom: 1px dashed #333; padding-bottom: 10px;
+}
+.settings-box label { display: block; color: var(--neon-blue); font-size: 0.8rem; margin: 10px 0 5px; }
+.cyber-input {
+    background: #000; border: 1px solid var(--neon-green); color: #fff;
+    padding: 10px; width: 100%; font-family: monospace; font-size: 1.2rem; text-transform: uppercase;
+}
+.cyber-input:focus { outline: none; box-shadow: 0 0 10px var(--neon-green); }
+
+.time-selector { display: flex; gap: 10px; }
+.time-btn {
+    flex: 1; background: #111; border: 1px solid #555; color: #555;
+    padding: 8px; cursor: pointer; font-family: monospace;
+}
+.time-btn.active { border-color: var(--neon-green); color: var(--neon-green); background: #002200; }
+
+/* --- LEADERBOARD TABLE (NEW) --- */
+.leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+.leaderboard-table th { text-align: left; border-bottom: 1px solid var(--neon-green); padding: 5px; color: var(--neon-blue); }
+.leaderboard-table td { padding: 5px; border-bottom: 1px solid #333; }
+.leaderboard-table tr:first-child td { color: var(--neon-yellow); font-weight: bold; } /* ที่ 1 สีทอง */
 
 /* TEXT & BOXES */
 .glitch-title { font-size: 2.5rem; text-shadow: 2px 2px var(--neon-red); margin-bottom: 20px; }
@@ -97,44 +122,23 @@ body {
 .m-eye { width: 30px; height: 8px; background: var(--neon-red); position: absolute; top: 30px; left: 25px; animation: blink 2s infinite; }
 .damage-text { position: absolute; top: -30px; font-weight: bold; font-size: 1.5rem; opacity: 0; text-shadow: 0 0 5px #000; }
 
-/* BOSS MODE */
-.boss-mode {
-    background: radial-gradient(circle, #ff0000, #550000) !important;
-    box-shadow: 0 0 20px #f00 !important;
-    animation: bossFloat 0.5s ease-in-out infinite !important;
-}
+.boss-mode { background: radial-gradient(circle, #ff0000, #550000) !important; box-shadow: 0 0 20px #f00 !important; animation: bossFloat 0.5s ease-in-out infinite !important; }
 .boss-mode .m-eye { background: #ffff00 !important; box-shadow: 0 0 10px #ff0; }
-@keyframes bossFloat {
-    0%, 100% { transform: scale(1.3) translateY(0); }
-    50% { transform: scale(1.3) translateY(-10px); }
-}
+@keyframes bossFloat { 0%, 100% { transform: scale(1.3) translateY(0); } 50% { transform: scale(1.3) translateY(-10px); } }
 
 /* CONSOLE */
-.console-wrapper {
-    background: rgba(0,0,0,0.9); border: 1px solid var(--neon-blue); padding: 10px;
-    border-radius: 5px; display: flex; flex-direction: column; gap: 10px;
-}
+.console-wrapper { background: rgba(0,0,0,0.9); border: 1px solid var(--neon-blue); padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 10px; }
 .console-header { display: flex; justify-content: space-between; font-size: 0.8rem; }
-.code-editor {
-    background: #111; padding: 10px; border-left: 2px solid var(--neon-green);
-    font-size: 1rem; text-align: left; overflow-x: auto; white-space: pre-wrap; min-height: 60px;
-    display: flex; align-items: center;
-}
+.code-editor { background: #111; padding: 10px; border-left: 2px solid var(--neon-green); font-size: 1rem; text-align: left; overflow-x: auto; white-space: pre-wrap; min-height: 60px; display: flex; align-items: center; }
 .input-zone { display: flex; align-items: center; gap: 5px; }
 .prompt { color: var(--neon-green); }
-#player-input {
-    flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--neon-green);
-    color: #fff; font-size: 1rem; padding: 5px; font-family: monospace;
-}
+#player-input { flex: 1; background: transparent; border: none; border-bottom: 1px solid var(--neon-green); color: #fff; font-size: 1rem; padding: 5px; font-family: monospace; }
 .attack-btn { background: var(--neon-green); color: #000; border: none; padding: 5px 15px; font-weight: bold; cursor: pointer; }
 .power-ups { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
 .skill-btn { background: #222; border: 1px solid #555; color: #ccc; padding: 8px; font-size: 0.75rem; cursor: pointer; flex: 1; }
 
 /* REVIEW */
-.review-container {
-    height: 150px; overflow-y: auto; background: rgba(20,20,20,0.9);
-    border: 1px solid #0f0; padding: 10px; text-align: left; font-size: 0.85rem;
-}
+.review-container { height: 150px; overflow-y: auto; background: rgba(20,20,20,0.9); border: 1px solid #0f0; padding: 10px; text-align: left; font-size: 0.85rem; }
 .review-item { border-bottom: 1px solid #333; padding: 8px 0; }
 .review-code { color: var(--neon-blue); background: #222; padding: 2px; }
 
@@ -146,7 +150,6 @@ body {
 @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
 .valid { border-color: #0f0 !important; box-shadow: 0 0 10px #0f0; }
 
-/* RESPONSIVE */
 @media (max-width: 600px) {
     .glitch-title { font-size: 1.8rem; }
     .hud-top { flex-wrap: nowrap; } 

@@ -3,32 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE PYTHON HUNTER [FINAL CUT]</title>
+    <title>THE PYTHON HUNTER [FINAL]</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <canvas id="matrix-canvas"></canvas>
     <div class="crt-overlay"></div>
     <div class="scanline"></div>
-    
     <div id="particles-container"></div>
+
+    <div id="sound-toggle" class="sound-btn">🔊 ON</div>
 
     <div class="main-container turn-on-animation">
         
         <section id="menu-scene" class="scene active">
             <h1 class="glitch-title" data-text="PYTHON HUNTER">PYTHON HUNTER</h1>
+            
             <div class="terminal-box">
-                <p>> SYSTEM CHECK... OPTIMIZED</p>
-                <p>> AUDIO SYNTH... READY</p>
-                <p>> PARTICLES... ACTIVE</p>
+                <div class="settings-box">
+                    <label>IDENTIFY YOURSELF (ชื่อผู้เล่น):</label>
+                    <input type="text" id="player-name-input" class="cyber-input" placeholder="ENTER NAME..." maxlength="10">
+                    
+                    <label>TIME LIMIT (เวลาภารกิจ):</label>
+                    <div class="time-selector">
+                        <button class="time-btn active" onclick="game.setTime(60)">60s</button>
+                        <button class="time-btn" onclick="game.setTime(120)">120s</button>
+                        <button class="time-btn" onclick="game.setTime(180)">180s</button>
+                    </div>
+                </div>
+
                 <div class="menu-stats">
-                    <p style="color: #ff0;">🏆 BEST RECORD: <span id="menu-highscore">00000</span></p>
+                    <p style="color: #ff0;">🏆 CHAMPION: <span id="top-player-name">---</span> (<span id="menu-highscore">0</span>)</p>
                 </div>
                 <br>
-                <button class="cyber-btn" onclick="game.start()">[ INITIATE_HUNT ]</button>
+                <button class="cyber-btn" onclick="game.validateAndStart()">[ INITIATE_HUNT ]</button>
+                <button class="cyber-btn" onclick="game.showLeaderboard()">[ LEADERBOARD ]</button>
                 <button class="cyber-btn" onclick="game.showTutorial()">[ MANUAL ]</button>
             </div>
             <p class="credit">DEV: NATTHAPHON & KONGPOP</p>
+        </section>
+
+        <section id="leaderboard-scene" class="scene hidden">
+            <h2 class="glitch-title">HALL OF FAME</h2>
+            <div class="terminal-box">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>RANK</th>
+                            <th>NAME</th>
+                            <th>SCORE</th>
+                            <th>TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        </tbody>
+                </table>
+            </div>
+            <button class="cyber-btn" onclick="game.switchScene('menu')">[ BACK ]</button>
         </section>
 
         <section id="tutorial-scene" class="scene hidden">
@@ -36,17 +67,23 @@
             <div class="terminal-box scrollable-box">
                 <p>>> MISSION: กำจัด Bug ด้วย Python Code</p>
                 <br>
-                <p>>> CONTROLS:</p>
+                <p>>> PREPARATION (การเตรียมตัว):</p>
                 <ul class="info-list">
-                    <li>⌨️ พิมพ์คำตอบให้ถูกต้อง</li>
-                    <li>👆 กด ENTER หรือ EXECUTE เพื่อโจมตี</li>
+                    <li>👤 IDENTIFY: กรอกชื่อ Agent เพื่อบันทึกสถิติ</li>
+                    <li>⏱️ TIME: เลือกเวลาภารกิจได้ 60s / 120s / 180s</li>
                 </ul>
                 <br>
-                <p>>> SYSTEM:</p>
+                <p>>> COST (ค่าธรรมเนียมตัวช่วย):</p>
                 <ul class="info-list">
-                    <li>🔥 Combo: ยิ่งตอบถูกติดกัน คะแนนยิ่งคูณ</li>
-                    <li>👹 Boss Mode: Level 4 ขึ้นไป มอนสเตอร์จะดุร้าย</li>
-                    <li>🔊 Sound: ใช้ระบบเสียงสังเคราะห์ (Synth)</li>
+                    <li>🔑 HINT (ใบ้): <span style="color: #f00;">-50 คะแนน</span></li>
+                    <li>⏩ SKIP (ข้าม): <span style="color: #f00;">-100 คะแนน</span></li>
+                </ul>
+                <br>
+                <p>>> CONTROLS (การควบคุม):</p>
+                <ul class="info-list">
+                    <li>⌨️ พิมพ์คำตอบให้ถูกต้องในช่องว่าง</li>
+                    <li>👆 กด ENTER หรือปุ่ม EXECUTE เพื่อโจมตี</li>
+                    <li>🔊 กดปุ่มมุมขวาบนเพื่อ เปิด/ปิด เสียง</li>
                 </ul>
             </div>
             <br>
@@ -55,9 +92,9 @@
 
         <section id="game-scene" class="scene hidden">
             <div class="hud-top">
-                <div class="hud-box highscore-box">
-                    <span>RECORD</span>
-                    <h2 id="highscore-display">00000</h2>
+                <div class="hud-box">
+                    <span>PLAYER</span>
+                    <h2 id="current-player-display">UNK</h2>
                 </div>
                 <div class="hud-box score-box">
                     <span>SCORE</span>
@@ -101,17 +138,17 @@
                 </div>
                 <div class="power-ups">
                     <button onclick="game.usePotion()" class="skill-btn" id="btn-potion">HP(3)</button>
-                    <button onclick="game.useHint()" class="skill-btn" id="btn-hint">HINT(3)</button>
-                    <button onclick="game.useSkip()" class="skill-btn" id="btn-skip">SKIP(3)</button>
+                    <button onclick="game.useHint()" class="skill-btn" id="btn-hint">HINT(-50)</button>
+                    <button onclick="game.useSkip()" class="skill-btn" id="btn-skip">SKIP(-100)</button>
                 </div>
             </div>
         </section>
 
         <section id="gameover-scene" class="scene hidden">
-            <h1 class="danger-text">FAILURE</h1>
+            <h1 class="danger-text">SESSION END</h1>
             <div class="result-box">
+                <p>NAME: <span id="final-name" style="color:#0ff;">-</span></p>
                 <p>SCORE: <span id="final-score">0</span></p>
-                <p>HIGH SCORE: <span id="final-highscore" style="color:#ff0;">0</span></p>
                 <p>RANK: <span id="final-rank">NOVICE</span></p>
                 
                 <div style="margin-top: 15px;">
@@ -120,6 +157,7 @@
                 </div>
             </div>
             <button class="cyber-btn" onclick="location.reload()">[ REBOOT ]</button>
+            <button class="cyber-btn" onclick="game.showLeaderboard()">[ LEADERBOARD ]</button>
         </section>
     </div>
 
