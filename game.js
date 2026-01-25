@@ -1,5 +1,5 @@
 /* =========================================
-   PART 1: MATRIX RAIN EFFECT (พื้นหลัง)
+   PART 1: MATRIX RAIN EFFECT (Visuals)
    ========================================= */
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
@@ -11,11 +11,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
-const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-const nums = '0123456789';
-const alphabet = katakana + latin + nums;
-
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>/\\*&^%$#@!';
 const fontSize = 16;
 const columns = canvas.width / fontSize;
 const rainDrops = Array.from({ length: Math.ceil(columns) }).fill(1);
@@ -23,14 +19,12 @@ const rainDrops = Array.from({ length: Math.ceil(columns) }).fill(1);
 function drawMatrix() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.fillStyle = '#0F0';
     ctx.font = fontSize + 'px monospace';
 
     for (let i = 0; i < rainDrops.length; i++) {
         const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
         ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-
         if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
             rainDrops[i] = 0;
         }
@@ -41,11 +35,11 @@ setInterval(drawMatrix, 30);
 
 
 /* =========================================
-   PART 2: GAME ENGINE (ระบบเกม OOP)
+   PART 2: GAME ENGINE (OOP & Computational Logic)
    ========================================= */
 class GameEngine {
     constructor() {
-        // Game State
+        // State Initialization
         this.score = 0;
         this.hp = 100;
         this.maxHp = 100;
@@ -57,7 +51,7 @@ class GameEngine {
         this.isPlaying = false;
         this.timerInterval = null;
         
-        // Cache DOM Elements (รวม tutorial-scene แล้ว)
+        // DOM Elements Cache
         this.ui = {
             hpBar: document.getElementById('player-hp-bar'),
             score: document.getElementById('score-display'),
@@ -73,20 +67,19 @@ class GameEngine {
                 menu: document.getElementById('menu-scene'),
                 game: document.getElementById('game-scene'),
                 over: document.getElementById('gameover-scene'),
-                tutorial: document.getElementById('tutorial-scene') // <--- จุดสำคัญที่เพิ่มเข้ามา
+                tutorial: document.getElementById('tutorial-scene')
             },
             finalScore: document.getElementById('final-score'),
             finalRank: document.getElementById('final-rank')
         };
 
-        // Event Listeners
+        // Event Binding
         this.ui.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.checkAnswer();
         });
         document.getElementById('attack-btn').addEventListener('click', () => this.checkAnswer());
     }
 
-    // เริ่มเกม
     start() {
         this.switchScene('game');
         this.resetStats();
@@ -96,15 +89,13 @@ class GameEngine {
         this.ui.input.focus();
     }
 
-    // แสดงหน้าสอนเล่น (ฟังก์ชันที่เคยหายไป)
     showTutorial() {
         this.switchScene('tutorial');
     }
 
-    // สลับหน้าจอ
     switchScene(sceneName) {
         Object.values(this.ui.scenes).forEach(el => {
-            if(el) { // เช็คกัน error
+            if(el) {
                 el.classList.add('hidden');
                 el.classList.remove('active');
             }
@@ -141,10 +132,11 @@ class GameEngine {
         }, 1000);
     }
 
+    // Algorithm: Adaptive Difficulty Selection
     nextTurn() {
         let availableQuestions;
 
-        // Logic ความยาก
+        // Logic เลือกโจทย์ตามระดับความยาก (Adaptive)
         if (this.score < 500) {
             availableQuestions = QUESTION_DATABASE.filter(q => q.level <= 2);
         } else if (this.score < 1500) {
@@ -159,20 +151,25 @@ class GameEngine {
 
         this.currentQ = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
         
-        this.ui.code.innerHTML = this.currentQ.code;
-        this.ui.mission.innerText = `LEVEL ${this.currentQ.level}: ${this.currentQ.text}`;
-        this.ui.input.value = '';
+        // Display Code & Mission with Logic Type
+        this.ui.code.innerText = this.currentQ.code; // innerText รองรับ \n ได้ดีกว่า
         
+        // แสดงประเภทของโจทย์ (Computational Thinking Elements)
+        const typeTag = `<span style="color:#0f0; font-weight:bold;">[ PROCESS: ${this.currentQ.type} ]</span>`;
+        this.ui.mission.innerHTML = `${typeTag} ${this.currentQ.text}`;
+        
+        this.ui.input.value = '';
         this.ui.monster.classList.remove('hit');
     }
 
     checkAnswer() {
         if (!this.isPlaying) return;
         
-        const playerAns = this.ui.input.value.trim().toLowerCase();
-        const correctAns = this.currentQ.ans.toLowerCase();
+        const playerAns = this.ui.input.value.trim(); // เอา toLowerCase ออกบางส่วนถ้าต้องการ Case Sensitive แต่โจทย์เราส่วนใหญ่เป็นตัวพิมพ์เล็กหรือตัวเลขอยู่แล้ว
+        const correctAns = this.currentQ.ans;
 
-        if (playerAns === correctAns) {
+        // Validation Logic
+        if (playerAns.toLowerCase() === correctAns.toLowerCase()) {
             this.handleSuccess();
         } else {
             this.handleFail();
@@ -182,11 +179,12 @@ class GameEngine {
 
     handleSuccess() {
         this.combo++;
+        // Algorithm การคำนวณคะแนน
         const bonus = (this.combo * 10) + (this.currentQ.level * 20);
         this.score += 100 + bonus;
         this.timer = Math.min(60, this.timer + 5);
         
-        this.showDamage(`CRITICAL! +${100 + bonus}`, 'critical');
+        this.showDamage(`CALCULATION COMPLETE! +${100 + bonus}`, 'critical');
         this.ui.input.classList.add('valid');
         setTimeout(() => this.ui.input.classList.remove('valid'), 200);
 
@@ -199,7 +197,7 @@ class GameEngine {
     handleFail() {
         this.combo = 0;
         this.hp -= 20;
-        this.showDamage("-20 HP INTEGRITY LOST", 'danger');
+        this.showDamage("LOGIC ERROR! -20 HP", 'danger');
         
         document.body.classList.add('shake');
         setTimeout(() => document.body.classList.remove('shake'), 300);
@@ -215,11 +213,12 @@ class GameEngine {
             this.hints--;
             this.ui.btnHint.innerText = `DECRYPT_KEY (${this.hints})`;
             
-            const hintText = this.currentQ.ans.substring(0, 2);
+            // Algorithm การใบ้: ตัดตัวอักษร 1-2 ตัวแรกมาโชว์
+            const hintText = this.currentQ.ans.substring(0, 1);
             this.ui.input.value = hintText;
             this.ui.input.focus();
             
-            this.showDamage("HINT ACTIVATED", 'critical');
+            this.showDamage("HINT INJECTED", 'critical');
             
             if (this.hints === 0) this.ui.btnHint.disabled = true;
         }
@@ -230,7 +229,7 @@ class GameEngine {
             this.potions--;
             this.hp = Math.min(100, this.hp + 30);
             this.ui.btnPotion.innerText = `REPAIR_KIT (${this.potions})`;
-            this.showDamage("+30 HP REPAIRED", 'critical');
+            this.showDamage("SYSTEM REPAIRED +30 HP", 'critical');
             this.updateHUD();
             
             if (this.potions === 0) this.ui.btnPotion.disabled = true;
@@ -253,13 +252,14 @@ class GameEngine {
         this.ui.timer.innerText = this.timer;
         this.ui.hpBar.style.width = this.hp + '%';
         
+        // Conditional Rendering for HP Bar Color
         if (this.hp > 50) this.ui.hpBar.style.background = '#0f0';
         else if (this.hp > 20) this.ui.hpBar.style.background = '#ff0';
         else this.ui.hpBar.style.background = '#f00';
 
         if(this.combo > 1) {
             this.ui.combo.classList.remove('hidden');
-            this.ui.combo.innerText = `COMBO x${this.combo}`;
+            this.ui.combo.innerText = `COMBO THREAD x${this.combo}`;
         } else {
             this.ui.combo.classList.add('hidden');
         }
@@ -271,10 +271,10 @@ class GameEngine {
         
         this.ui.finalScore.innerText = this.score;
         
-        let rank = "SCRIPT KIDDIE (มือใหม่)";
-        if(this.score > 1000) rank = "JUNIOR DEV (พอใช้)";
-        if(this.score > 2500) rank = "SENIOR HACKER (เก่งมาก)";
-        if(this.score > 4000) rank = "CYBERPUNK GOD (เทพเจ้า)";
+        let rank = "BEGINNER";
+        if(this.score > 1000) rank = "LOGICIAN (นักตรรกะ)";
+        if(this.score > 2500) rank = "ALGORITHM MASTER";
+        if(this.score > 4000) rank = "THE PYTHON HUNTER";
         
         this.ui.finalRank.innerText = rank;
         this.ui.finalRank.style.color = "#0f0";
@@ -283,5 +283,5 @@ class GameEngine {
     }
 }
 
-// Start Game
+// Start Game Engine
 const game = new GameEngine();

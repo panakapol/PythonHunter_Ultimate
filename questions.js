@@ -1,213 +1,61 @@
 const QUESTION_DATABASE = [
     // ==========================================
-    // LEVEL 1: BASICS & VARIABLES (พื้นฐานสุดๆ)
+    // LEVEL 1: BASIC SYNTAX (พื้นฐานไวยากรณ์)
     // ==========================================
-    { 
-        id: 101, 
-        level: 1, 
-        text: "แสดงผลข้อความทางหน้าจอ Console", 
-        code: "____('System Online')", 
-        ans: "print", 
-        hint: "คำสั่งพื้นฐานที่สุด (p____)" 
-    },
-    { 
-        id: 102, 
-        level: 1, 
-        text: "รับค่า Input จากผู้ใช้", 
-        code: "user = ____('Username: ')", 
-        ans: "input", 
-        hint: "ตรงข้ามกับ output (i____)" 
-    },
-    { 
-        id: 103, 
-        level: 1, 
-        text: "แปลงค่า String เป็นตัวเลขจำนวนเต็ม", 
-        code: "hp = ____('100')", 
-        ans: "int", 
-        hint: "ย่อมาจาก Integer" 
-    },
-    { 
-        id: 104, 
-        level: 1, 
-        text: "หาความยาวของข้อความ หรือ List", 
-        code: "size = ____(my_list)", 
-        ans: "len", 
-        hint: "ย่อมาจาก length" 
-    },
-    { 
-        id: 105, 
-        level: 1, 
-        text: "แปลงค่าเป็นข้อความ (String)", 
-        code: "msg = 'Score: ' + ____(150)", 
-        ans: "str", 
-        hint: "ย่อมาจาก String" 
-    },
+    { id: 101, level: 1, type: 'SYNTAX', text: "คำสั่งแสดงผลทางหน้าจอ", code: "____('System Ready')", ans: "print", hint: "p____" },
+    { id: 102, level: 1, type: 'SYNTAX', text: "แปลงข้อมูลเป็นจำนวนเต็ม", code: "x = ____('10')", ans: "int", hint: "integer" },
+    { id: 103, level: 1, type: 'SYNTAX', text: "รับค่าจากผู้ใช้ (User Input)", code: "name = ____('Enter Name:')", ans: "input", hint: "ตรงข้าม output" },
+    { id: 104, level: 1, type: 'SYNTAX', text: "เช็คชนิดข้อมูล (Check Type)", code: "print(____(3.14))", ans: "type", hint: "ชนิด" },
+    { id: 105, level: 1, type: 'SYNTAX', text: "แปลงเป็นข้อความ (String)", code: "msg = 'Level ' + ____(5)", ans: "str", hint: "string" },
+    { id: 106, level: 1, type: 'SYNTAX', text: "ค่าความจริง (Boolean) ว่างเปล่า/เท็จ", code: "flag = ____", ans: "False", hint: "ตรงข้าม True" },
+    { id: 107, level: 1, type: 'SYNTAX', text: "ตัวดำเนินการทางตรรกะ 'และ'", code: "if A ____ B:", ans: "and", hint: "และ" },
+    { id: 108, level: 1, type: 'SYNTAX', text: "ตัวดำเนินการทางตรรกะ 'หรือ'", code: "if A ____ B:", ans: "or", hint: "หรือ" },
 
     // ==========================================
-    // LEVEL 2: CONTROL FLOW (เงื่อนไขและลูป)
+    // LEVEL 2: LOGIC & CONDITIONS (ตรรกะและเงื่อนไข)
     // ==========================================
-    { 
-        id: 201, 
-        level: 2, 
-        text: "เงื่อนไข: ถ้าคะแนนมากกว่า 50", 
-        code: "____ score > 50:", 
-        ans: "if", 
-        hint: "ถ้า... (ภาษาอังกฤษ)" 
-    },
-    { 
-        id: 202, 
-        level: 2, 
-        text: "เงื่อนไขทางเลือก (Else If)", 
-        code: "____ score > 30:", 
-        ans: "elif", 
-        hint: "ใน Python ใช้ elif ไม่ใช่ else if" 
-    },
-    { 
-        id: 203, 
-        level: 2, 
-        text: "กรณีเงื่อนไขไม่ตรงกับอะไรเลย", 
-        code: "____:", 
-        ans: "else", 
-        hint: "มิฉะนั้น..." 
-    },
-    { 
-        id: 204, 
-        level: 2, 
-        text: "Loop ทำงานตามจำนวนรอบ", 
-        code: "for i in ____(10):", 
-        ans: "range", 
-        hint: "ฟังก์ชันสร้างช่วงตัวเลข (r____)" 
-    },
-    { 
-        id: 205, 
-        level: 2, 
-        text: "Loop ทำงานเมื่อเงื่อนไขเป็นจริง", 
-        code: "____ hp > 0:", 
-        ans: "while", 
-        hint: "ทำซ้ำ 'ขณะที่'..." 
-    },
-    { 
-        id: 206, 
-        level: 2, 
-        text: "หยุดการทำงานของ Loop ทันที", 
-        code: "if dead: ____", 
-        ans: "break", 
-        hint: "หัก/หยุด (b____)" 
-    },
+    { id: 201, level: 2, type: 'LOGIC', text: "ตรวจสอบความเท่ากัน", code: "if x ____ 10:", ans: "==", hint: "เท่ากับ 2 ตัว" },
+    { id: 202, level: 2, type: 'LOGIC', text: "ตรวจสอบว่า 'ไม่เท่ากับ'", code: "if x ____ 0:", ans: "!=", hint: "ตกใจ + เท่ากับ" },
+    { id: 203, level: 2, type: 'LOGIC', text: "เงื่อนไขทางเลือก (Else If)", code: "____ x > 5:", ans: "elif", hint: "ย่อมาจาก Else If" },
+    { id: 204, level: 2, type: 'LOGIC', text: "กรณีไม่เข้าเงื่อนไขใดเลย", code: "____:", ans: "else", hint: "มิฉะนั้น" },
+    { id: 205, level: 2, type: 'LOGIC', text: "ผลลัพธ์ของ 10 หารเอาเศษ 3", code: "print(10 ____ 3)", ans: "%", hint: "Modulo Symbol" },
+    { id: 206, level: 2, type: 'LOGIC', text: "ผลลัพธ์: True or False?", code: "print(not True)", ans: "False", hint: "ตรงข้าม True" },
+    { id: 207, level: 2, type: 'LOGIC', text: "ผลลัพธ์ของ 2 ยกกำลัง 3", code: "print(2 ____ 3)", ans: "**", hint: "คูณ 2 ครั้ง" },
+    { id: 208, level: 2, type: 'LOGIC', text: "x มีค่าเท่าไหร่?", code: "x = 10; x += 5", ans: "15", hint: "10 บวก 5" },
 
     // ==========================================
-    // LEVEL 3: DATA STRUCTURES (List & Dict)
+    // LEVEL 3: LOOPS & PATTERNS (การวนซ้ำ)
     // ==========================================
-    { 
-        id: 301, 
-        level: 3, 
-        text: "เพิ่มข้อมูลต่อท้าย List", 
-        code: "inventory.____('Sword')", 
-        ans: "append", 
-        hint: "ภาษาอังกฤษแปลว่า 'แนบท้าย'" 
-    },
-    { 
-        id: 302, 
-        level: 3, 
-        text: "ลบข้อมูลออกจาก List", 
-        code: "inventory.____('Trash')", 
-        ans: "remove", 
-        hint: "ภาษาอังกฤษแปลว่า 'ลบออก'" 
-    },
-    { 
-        id: 303, 
-        level: 3, 
-        text: "เรียงลำดับข้อมูลใน List", 
-        code: "scores.____()", 
-        ans: "sort", 
-        hint: "จัดเรียง (s____)" 
-    },
-    { 
-        id: 304, 
-        level: 3, 
-        text: "ดึง Keys ทั้งหมดจาก Dictionary", 
-        code: "user_data.____()", 
-        ans: "keys", 
-        hint: "กุญแจ (เติม s)" 
-    },
+    { id: 301, level: 3, type: 'PATTERN', text: "สร้างช่วงตัวเลข 0,1,2,3,4", code: "for i in ____(5):", ans: "range", hint: "ระยะ/ช่วง" },
+    { id: 302, level: 3, type: 'ALGO', text: "วนซ้ำตราบเท่าที่เงื่อนไขเป็นจริง", code: "____ hp > 0:", ans: "while", hint: "ขณะที่" },
+    { id: 303, level: 3, type: 'ALGO', text: "สั่งหยุดการทำงานของ Loop ทันที", code: "if dead: ____", ans: "break", hint: "เบรค/หยุด" },
+    { id: 304, level: 3, type: 'ALGO', text: "ข้ามรอบนี้ไปรอบถัดไป", code: "if safe: ____", ans: "continue", hint: "ไปต่อ" },
+    { id: 305, level: 3, type: 'PATTERN', text: "หาความยาวของ List", code: "size = ____(my_list)", ans: "len", hint: "length" },
+    { id: 306, level: 3, type: 'ALGO', text: "ผลลัพธ์สุดท้ายของ x", code: "x=0\nfor i in range(3): x+=1", ans: "3", hint: "บวกทีละ 1 สามครั้ง" },
+    { id: 307, level: 3, type: 'PATTERN', text: "เริ่ม Loop จาก 1 ถึง 10", code: "range(1, ____)", ans: "11", hint: "ตัวจบต้อง +1" },
+    { id: 308, level: 3, type: 'ALGO', text: "Loop ทำงานกี่รอบ?", code: "for i in range(2, 5):", ans: "3", hint: "2, 3, 4" },
 
     // ==========================================
-    // LEVEL 4: FUNCTIONS & MODULES (เริ่มยาก)
+    // LEVEL 4: DATA STRUCTURES & FUNCTIONS (โครงสร้างข้อมูล)
     // ==========================================
-    { 
-        id: 401, 
-        level: 4, 
-        text: "ประกาศสร้างฟังก์ชันใหม่", 
-        code: "____ cal_damage(atk):", 
-        ans: "def", 
-        hint: "Define (ย่อเหลือ 3 ตัว)" 
-    },
-    { 
-        id: 402, 
-        level: 4, 
-        text: "ส่งค่ากลับจากฟังก์ชัน", 
-        code: "____ total_damage", 
-        ans: "return", 
-        hint: "ย้อนกลับ/ส่งคืน" 
-    },
-    { 
-        id: 403, 
-        level: 4, 
-        text: "เรียกใช้ Library ภายนอก", 
-        code: "____ random", 
-        ans: "import", 
-        hint: "นำเข้า" 
-    },
-    { 
-        id: 404, 
-        level: 4, 
-        text: "สุ่มตัวเลขจำนวนเต็ม", 
-        code: "x = random.____(1, 100)", 
-        ans: "randint", 
-        hint: "random + integer" 
-    },
-    { 
-        id: 405, 
-        level: 4, 
-        text: "ฟังก์ชันรากที่สอง (Square Root)", 
-        code: "math.____(16)", 
-        ans: "sqrt", 
-        hint: "SQuare RooT (ย่อ)" 
-    },
+    { id: 401, level: 4, type: 'DATA', text: "เพิ่มข้อมูลต่อท้าย List", code: "items.____('Sword')", ans: "append", hint: "ภาษาอังกฤษแปลว่าแนบท้าย" },
+    { id: 402, level: 4, type: 'DATA', text: "ลบข้อมูลออกจาก List", code: "items.____('Trash')", ans: "remove", hint: "เอาออก" },
+    { id: 403, level: 4, type: 'DATA', text: "เรียงลำดับข้อมูลใน List", code: "scores.____()", ans: "sort", hint: "จัดเรียง" },
+    { id: 404, level: 4, type: 'ABSTRACTION', text: "ประกาศฟังก์ชัน (Define)", code: "____ attack():", ans: "def", hint: "ย่อจาก define" },
+    { id: 405, level: 4, type: 'ABSTRACTION', text: "ส่งค่าคืนจากฟังก์ชัน", code: "____ damage", ans: "return", hint: "ย้อนกลับ" },
+    { id: 406, level: 4, type: 'DATA', text: "เข้าถึง Value ใน Dictionary", code: "data.____('key')", ans: "get", hint: "ดึงค่า" },
+    { id: 407, level: 4, type: 'LIBRARY', text: "นำเข้าโมดูลภายนอก", code: "____ math", ans: "import", hint: "นำเข้า" },
+    { id: 408, level: 4, type: 'LIBRARY', text: "สุ่มตัวเลขจำนวนเต็ม", code: "random.____(1, 100)", ans: "randint", hint: "random + integer" },
 
     // ==========================================
-    // LEVEL 5: OOP & CLASS (ระดับบอส)
+    // LEVEL 5: ALGORITHM TRACING & OOP (ระดับบอส - ยาก)
     // ==========================================
-    { 
-        id: 501, 
-        level: 5, 
-        text: "ประกาศสร้าง Class ใหม่", 
-        code: "____ Monster:", 
-        ans: "class", 
-        hint: "แม่พิมพ์ของ Object" 
-    },
-    { 
-        id: 502, 
-        level: 5, 
-        text: "Constructor Function (ฟังก์ชันเริ่มแรก)", 
-        code: "def ____(self, name):", 
-        ans: "__init__", 
-        hint: "init มี underscore หน้าหลังอย่างละ 2" 
-    },
-    { 
-        id: 503, 
-        level: 5, 
-        text: "ตัวแปรแทนตัว Object นั้นๆ", 
-        code: "____.name = name", 
-        ans: "self", 
-        hint: "ตัวเอง" 
-    },
-    { 
-        id: 504, 
-        level: 5, 
-        text: "สร้าง Object จาก Class (Instantiate)", 
-        code: "boss = Monster____", 
-        ans: "()", 
-        hint: "วงเล็บเปิดปิด" 
-    }
+    { id: 501, level: 5, type: 'OOP', text: "สร้าง Class ใหม่", code: "____ Monster:", ans: "class", hint: "แม่แบบวัตถุ" },
+    { id: 502, level: 5, type: 'OOP', text: "Constructor ของ Class", code: "def ____(self):", ans: "__init__", hint: "init มี underscore คู่" },
+    { id: 503, level: 5, type: 'OOP', text: "อ้างอิงตัววัตถุเอง", code: "____.hp = 100", ans: "self", hint: "ตัวเอง" },
+    { id: 504, level: 5, type: 'ALGO_TRACE', text: "ผลลัพธ์ของ Code นี้คือ?", code: "L = [x for x in range(3)]\nprint(L)", ans: "[0, 1, 2]", hint: "List Comprehension 0 ถึง 2" },
+    { id: 505, level: 5, type: 'ALGO_TRACE', text: "ค่าของ result คือ?", code: "def f(x): return x*2\nresult = f(f(2))", ans: "8", hint: "2*2 แล้วเอาผลลัพธ์ *2 อีกที" },
+    { id: 506, level: 5, type: 'ALGO_TRACE', text: "ผลลัพธ์การตัดคำ (Split)", code: "'A-B'.split('-')", ans: "['A', 'B']", hint: "ได้ List ของตัวอักษร" },
+    { id: 507, level: 5, type: 'LOGIC_HARD', text: "ผลลัพธ์คือ True หรือ False?", code: "print(10 > 5 and not False)", ans: "True", hint: "จริง และ (ไม่เท็จ)" },
+    { id: 508, level: 5, type: 'ALGO_TRACE', text: "Index ตัวสุดท้ายของ List", code: "L = [10, 20, 30]\nprint(L[____])", ans: "-1", hint: "นับจากข้างหลัง" }
 ];
