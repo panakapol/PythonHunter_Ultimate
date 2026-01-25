@@ -1,5 +1,5 @@
 /* =========================================
-   PART 1: MATRIX RAIN EFFECT (Visuals)
+   PART 1: MATRIX RAIN EFFECT
    ========================================= */
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
@@ -35,11 +35,11 @@ setInterval(drawMatrix, 30);
 
 
 /* =========================================
-   PART 2: GAME ENGINE (OOP & Computational Logic)
+   PART 2: GAME ENGINE
    ========================================= */
 class GameEngine {
     constructor() {
-        // State Initialization
+        // State
         this.score = 0;
         this.hp = 100;
         this.maxHp = 100;
@@ -47,11 +47,13 @@ class GameEngine {
         this.combo = 0;
         this.hints = 3;
         this.potions = 3;
+        this.skips = 3; // เพิ่มตัวแปร Skip
         this.currentQ = null;
         this.isPlaying = false;
         this.timerInterval = null;
+        this.sessionHistory = []; // เก็บประวัติข้อที่เจอเพื่อเฉลย
         
-        // DOM Elements Cache
+        // DOM Elements
         this.ui = {
             hpBar: document.getElementById('player-hp-bar'),
             score: document.getElementById('score-display'),
@@ -63,6 +65,8 @@ class GameEngine {
             monster: document.getElementById('monster-sprite'),
             btnHint: document.getElementById('btn-hint'),
             btnPotion: document.getElementById('btn-potion'),
+            btnSkip: document.getElementById('btn-skip'), // ปุ่ม Skip
+            reviewBox: document.getElementById('review-box'), // กล่องเฉลย
             scenes: {
                 menu: document.getElementById('menu-scene'),
                 game: document.getElementById('game-scene'),
@@ -73,7 +77,7 @@ class GameEngine {
             finalRank: document.getElementById('final-rank')
         };
 
-        // Event Binding
+        // Events
         this.ui.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.checkAnswer();
         });
@@ -95,10 +99,7 @@ class GameEngine {
 
     switchScene(sceneName) {
         Object.values(this.ui.scenes).forEach(el => {
-            if(el) {
-                el.classList.add('hidden');
-                el.classList.remove('active');
-            }
+            if(el) { el.classList.add('hidden'); el.classList.remove('active'); }
         });
         if(this.ui.scenes[sceneName]) {
             this.ui.scenes[sceneName].classList.remove('hidden');
@@ -113,11 +114,15 @@ class GameEngine {
         this.combo = 0;
         this.hints = 3;
         this.potions = 3;
+        this.skips = 3;
+        this.sessionHistory = []; // ล้างประวัติเฉลย
         
         this.ui.btnHint.innerText = `DECRYPT_KEY (${this.hints})`;
         this.ui.btnPotion.innerText = `REPAIR_KIT (${this.potions})`;
+        this.ui.btnSkip.innerText = `BYPASS_FIREWALL (${this.skips})`;
         this.ui.btnHint.disabled = false;
         this.ui.btnPotion.disabled = false;
+        this.ui.btnSkip.disabled = false;
         
         this.updateHUD();
     }
@@ -132,11 +137,10 @@ class GameEngine {
         }, 1000);
     }
 
-    // Algorithm: Adaptive Difficulty Selection
     nextTurn() {
         let availableQuestions;
 
-        // Logic เลือกโจทย์ตามระดับความยาก (Adaptive)
+        // Logic เลือกโจทย์ตามคะแนน (Adaptive)
         if (this.score < 500) {
             availableQuestions = QUESTION_DATABASE.filter(q => q.level <= 2);
         } else if (this.score < 1500) {
@@ -149,12 +153,14 @@ class GameEngine {
             availableQuestions = QUESTION_DATABASE;
         }
 
+        // สุ่มโจทย์ใหม่
         this.currentQ = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
         
-        // Display Code & Mission with Logic Type
-        this.ui.code.innerText = this.currentQ.code; // innerText รองรับ \n ได้ดีกว่า
-        
-        // แสดงประเภทของโจทย์ (Computational Thinking Elements)
+        // บันทึกลงประวัติเพื่อใช้เฉลยตอนจบ (เก็บ Object โจทย์ไว้)
+        this.sessionHistory.push(this.currentQ);
+
+        // Display
+        this.ui.code.innerText = this.currentQ.code; 
         const typeTag = `<span style="color:#0f0; font-weight:bold;">[ PROCESS: ${this.currentQ.type} ]</span>`;
         this.ui.mission.innerHTML = `${typeTag} ${this.currentQ.text}`;
         
@@ -165,10 +171,9 @@ class GameEngine {
     checkAnswer() {
         if (!this.isPlaying) return;
         
-        const playerAns = this.ui.input.value.trim(); // เอา toLowerCase ออกบางส่วนถ้าต้องการ Case Sensitive แต่โจทย์เราส่วนใหญ่เป็นตัวพิมพ์เล็กหรือตัวเลขอยู่แล้ว
+        const playerAns = this.ui.input.value.trim();
         const correctAns = this.currentQ.ans;
 
-        // Validation Logic
         if (playerAns.toLowerCase() === correctAns.toLowerCase()) {
             this.handleSuccess();
         } else {
@@ -179,7 +184,6 @@ class GameEngine {
 
     handleSuccess() {
         this.combo++;
-        // Algorithm การคำนวณคะแนน
         const bonus = (this.combo * 10) + (this.currentQ.level * 20);
         this.score += 100 + bonus;
         this.timer = Math.min(60, this.timer + 5);
@@ -213,13 +217,11 @@ class GameEngine {
             this.hints--;
             this.ui.btnHint.innerText = `DECRYPT_KEY (${this.hints})`;
             
-            // Algorithm การใบ้: ตัดตัวอักษร 1-2 ตัวแรกมาโชว์
             const hintText = this.currentQ.ans.substring(0, 1);
             this.ui.input.value = hintText;
             this.ui.input.focus();
             
             this.showDamage("HINT INJECTED", 'critical');
-            
             if (this.hints === 0) this.ui.btnHint.disabled = true;
         }
     }
@@ -231,8 +233,22 @@ class GameEngine {
             this.ui.btnPotion.innerText = `REPAIR_KIT (${this.potions})`;
             this.showDamage("SYSTEM REPAIRED +30 HP", 'critical');
             this.updateHUD();
-            
             if (this.potions === 0) this.ui.btnPotion.disabled = true;
+        }
+    }
+
+    // ฟังก์ชัน Skip (ข้ามข้อ)
+    useSkip() {
+        if (this.skips > 0) {
+            this.skips--;
+            this.ui.btnSkip.innerText = `BYPASS_FIREWALL (${this.skips})`;
+            
+            this.showDamage("DATA SKIPPED >> NEXT", 'critical');
+            
+            // ข้ามโดยไม่เสียเลือดและไม่คิดคะแนน
+            this.nextTurn();
+
+            if (this.skips === 0) this.ui.btnSkip.disabled = true;
         }
     }
 
@@ -252,7 +268,6 @@ class GameEngine {
         this.ui.timer.innerText = this.timer;
         this.ui.hpBar.style.width = this.hp + '%';
         
-        // Conditional Rendering for HP Bar Color
         if (this.hp > 50) this.ui.hpBar.style.background = '#0f0';
         else if (this.hp > 20) this.ui.hpBar.style.background = '#ff0';
         else this.ui.hpBar.style.background = '#f00';
@@ -272,14 +287,36 @@ class GameEngine {
         this.ui.finalScore.innerText = this.score;
         
         let rank = "BEGINNER";
-        if(this.score > 1000) rank = "LOGICIAN (นักตรรกะ)";
+        if(this.score > 1000) rank = "LOGICIAN";
         if(this.score > 2500) rank = "ALGORITHM MASTER";
         if(this.score > 4000) rank = "THE PYTHON HUNTER";
         
         this.ui.finalRank.innerText = rank;
         this.ui.finalRank.style.color = "#0f0";
+
+        // สร้าง Review (เฉลย)
+        this.generateReview();
         
         this.switchScene('over');
+    }
+
+    // ฟังก์ชันสร้างรายการเฉลย HTML
+    generateReview() {
+        this.ui.reviewBox.innerHTML = ''; // เคลียร์ของเก่า
+        
+        // กรองเอาข้อที่ซ้ำกันออก (Optional) หรือจะโชว์หมดก็ได้
+        // อันนี้โชว์หมดตามลำดับที่เจอ
+        this.sessionHistory.forEach((q, index) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'review-item';
+            itemDiv.innerHTML = `
+                <div style="color: #fff; margin-bottom: 5px;">${index + 1}. ${q.text}</div>
+                <div class="review-code">${q.code.replace('____', '<span style="color:#f00">____</span>')}</div>
+                <div class="review-ans">>> ตอบ: ${q.ans}</div>
+                <span class="review-explain">💡 ${q.explanation}</span>
+            `;
+            this.ui.reviewBox.appendChild(itemDiv);
+        });
     }
 }
 

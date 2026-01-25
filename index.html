@@ -5,10 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE PYTHON HUNTER [ULTIMATE]</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS เสริมสำหรับ Review Box */
+        .review-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #0f0;
+            padding: 10px;
+            margin: 15px 0;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .review-item {
+            border-bottom: 1px solid #333;
+            padding: 10px 0;
+            margin-bottom: 5px;
+        }
+        .review-code {
+            color: #0ff;
+            font-family: monospace;
+            background: #222;
+            padding: 2px 5px;
+        }
+        .review-ans { color: #0f0; font-weight: bold; }
+        .review-explain { color: #ccc; font-style: italic; display: block; margin-top: 5px; font-size: 0.8rem;}
+    </style>
 </head>
 <body>
     <canvas id="matrix-canvas"></canvas>
-    
     <div class="crt-overlay"></div>
     <div class="scanline"></div>
 
@@ -38,11 +63,11 @@
                     <li>[ENTER] โจมตี (Attack)</li>
                 </ul>
                 <br>
-                <p>>> SURVIVAL GUIDE:</p>
+                <p>>> POWER-UPS:</p>
                 <ul style="list-style: none; padding-left: 10px; color: #ccc;">
-                    <li>❤️ <span style="color:red">HP</span>: ลดลงเมื่อตอบผิด</li>
-                    <li>⏳ <span style="color:yellow">TIME</span>: เวลาหมด = ภารกิจล้มเหลว</li>
-                    <li>🔥 <span style="color:orange">COMBO</span>: ตอบถูกติดกัน คะแนนคูณเพิ่ม</li>
+                    <li>🔑 DECRYPT_KEY: ใบ้คำตอบ</li>
+                    <li>💉 REPAIR_KIT: เพิ่มเลือด</li>
+                    <li>⏩ BYPASS_FIREWALL: ข้ามข้อที่ทำไม่ได้ (Skip)</li>
                 </ul>
             </div>
             <br>
@@ -93,6 +118,7 @@
                 <div class="power-ups">
                     <button onclick="game.usePotion()" class="skill-btn" id="btn-potion">REPAIR_KIT (3)</button>
                     <button onclick="game.useHint()" class="skill-btn" id="btn-hint">DECRYPT_KEY (3)</button>
+                    <button onclick="game.useSkip()" class="skill-btn" id="btn-skip" style="color: #0ff; border-color: #0ff;">BYPASS_FIREWALL (3)</button>
                 </div>
             </div>
         </section>
@@ -102,6 +128,12 @@
             <div class="result-box" style="border: 2px solid red; padding: 20px; margin: 20px;">
                 <p>FINAL SCORE: <span id="final-score">0</span></p>
                 <p>RANK: <span id="final-rank">NOVICE</span></p>
+                
+                <div style="margin-top: 15px;">
+                    <h3 style="color: #0f0; border-bottom: 1px solid #0f0;">>> MISSION REVIEW (เฉลย)</h3>
+                    <div id="review-box" class="review-container">
+                        </div>
+                </div>
             </div>
             <button class="cyber-btn" onclick="location.reload()">[ REBOOT_SYSTEM ]</button>
         </section>
