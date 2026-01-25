@@ -21,7 +21,7 @@ body {
     align-items: center;
 }
 
-/* --- SOUND TOGGLE --- */
+/* SOUND TOGGLE BUTTON */
 .sound-btn {
     position: absolute;
     top: 10px; right: 10px;
@@ -64,7 +64,7 @@ body {
 .scene { display: none; text-align: center; width: 100%; }
 .scene.active { display: block; animation: fadeIn 0.3s; }
 
-/* --- SETTINGS BOX (NEW) --- */
+/* UI COMPONENTS */
 .settings-box {
     text-align: left; margin-bottom: 20px; border-bottom: 1px dashed #333; padding-bottom: 10px;
 }
@@ -82,11 +82,37 @@ body {
 }
 .time-btn.active { border-color: var(--neon-green); color: var(--neon-green); background: #002200; }
 
-/* --- LEADERBOARD TABLE (NEW) --- */
 .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
 .leaderboard-table th { text-align: left; border-bottom: 1px solid var(--neon-green); padding: 5px; color: var(--neon-blue); }
 .leaderboard-table td { padding: 5px; border-bottom: 1px solid #333; }
-.leaderboard-table tr:first-child td { color: var(--neon-yellow); font-weight: bold; } /* ที่ 1 สีทอง */
+.leaderboard-table tr:first-child td { color: var(--neon-yellow); font-weight: bold; }
+
+/* --- ARCHIVE STYLES (NEW) --- */
+.archive-head {
+    color: var(--neon-yellow);
+    border-bottom: 1px solid #333;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    padding-bottom: 2px;
+    font-size: 1rem;
+}
+.archive-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.archive-list li {
+    margin-bottom: 5px;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+.kw { /* Style for keywords like print, if, else */
+    color: var(--neon-blue);
+    font-weight: bold;
+    background: #001111;
+    padding: 0 4px;
+    border-radius: 2px;
+}
 
 /* TEXT & BOXES */
 .glitch-title { font-size: 2.5rem; text-shadow: 2px 2px var(--neon-red); margin-bottom: 20px; }
@@ -94,10 +120,19 @@ body {
 .scrollable-box { max-height: 50vh; overflow-y: auto; text-align: left; }
 .info-list { text-align: left; padding-left: 20px; color: #ccc; }
 
-/* BUTTONS */
+/* BUTTONS GROUP */
+.btn-group {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+}
+
 .cyber-btn {
     background: transparent; border: 1px solid var(--neon-green); color: var(--neon-green);
-    padding: 12px 24px; font-size: 1rem; cursor: pointer; margin: 5px; transition: 0.2s; font-weight: bold;
+    padding: 12px 24px; font-size: 1rem; cursor: pointer; margin: 2px; transition: 0.2s; font-weight: bold;
+    flex: 1; min-width: 120px;
 }
 .cyber-btn:active { background: var(--neon-green); color: #000; }
 
@@ -160,4 +195,5 @@ body {
     .console-wrapper { padding: 8px; }
     .code-editor { font-size: 0.9rem; min-height: 50px; }
     .review-container { height: 200px; }
+    .btn-group { flex-direction: column; } /* ปุ่มเรียงแนวตั้งในมือถือ */
 }

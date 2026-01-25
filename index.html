@@ -36,11 +36,69 @@
                     <p style="color: #ff0;">🏆 CHAMPION: <span id="top-player-name">---</span> (<span id="menu-highscore">0</span>)</p>
                 </div>
                 <br>
-                <button class="cyber-btn" onclick="game.validateAndStart()">[ INITIATE_HUNT ]</button>
-                <button class="cyber-btn" onclick="game.showLeaderboard()">[ LEADERBOARD ]</button>
-                <button class="cyber-btn" onclick="game.showTutorial()">[ MANUAL ]</button>
+                <div class="btn-group">
+                    <button class="cyber-btn" onclick="game.validateAndStart()">[ INITIATE_HUNT ]</button>
+                </div>
+                <div class="btn-group">
+                    <button class="cyber-btn" onclick="game.showArchive()">[ ARCHIVE ]</button> <button class="cyber-btn" onclick="game.showLeaderboard()">[ LEADERBOARD ]</button>
+                    <button class="cyber-btn" onclick="game.showTutorial()">[ MANUAL ]</button>
+                </div>
             </div>
             <p class="credit">DEV: PANAKAPOL & KONGPHOP</p>
+        </section>
+
+        <section id="archive-scene" class="scene hidden">
+            <h2 class="glitch-title">PYTHON ARCHIVE</h2>
+            <div class="terminal-box scrollable-box" style="text-align: left;">
+                <p style="color:#aaa; font-style:italic; text-align:center;">"คู่มือเอาตัวรอดสำหรับ Hunter มือใหม่"</p>
+                
+                <h3 class="archive-head">LV.1: พื้นฐาน (SYNTAX)</h3>
+                <ul class="archive-list">
+                    <li><span class="kw">print</span>(...) : แสดงข้อความออกหน้าจอ</li>
+                    <li><span class="kw">input</span>(...) : รับค่าจากคีย์บอร์ด</li>
+                    <li><span class="kw">int</span>(...) : แปลงเป็นตัวเลขจำนวนเต็ม (Integer)</li>
+                    <li><span class="kw">str</span>(...) : แปลงเป็นข้อความ (String)</li>
+                    <li><span class="kw">type</span>(...) : เช็คว่าข้อมูลเป็นชนิดอะไร</li>
+                </ul>
+
+                <h3 class="archive-head">LV.2: ตรรกะและการตัดสินใจ (LOGIC)</h3>
+                <ul class="archive-list">
+                    <li><span class="kw">if</span> / <span class="kw">elif</span> / <span class="kw">else</span> : เงื่อนไข (ถ้า / แล้วถ้า / มิฉะนั้น)</li>
+                    <li><span class="kw">==</span> : เท่ากับ (เปรียบเทียบ) | <span class="kw">!=</span> : ไม่เท่ากับ</li>
+                    <li><span class="kw">%</span> : หารเอาเศษ (เช่น 10%3 เหลือเศษ 1)</li>
+                    <li><span class="kw">**</span> : ยกกำลัง (เช่น 2**3 = 8)</li>
+                    <li><span class="kw">and</span> : จริงเมื่อถูกทั้งคู่ | <span class="kw">or</span> : จริงเมื่ออันใดอันหนึ่งถูก</li>
+                </ul>
+
+                <h3 class="archive-head">LV.3: การวนซ้ำ (LOOP)</h3>
+                <ul class="archive-list">
+                    <li><span class="kw">range</span>(5) : สร้างเลข 0 ถึง 4 (จำนวน 5 ตัว)</li>
+                    <li><span class="kw">while</span> : วนซ้ำตราบเท่าที่เงื่อนไขเป็นจริง</li>
+                    <li><span class="kw">break</span> : สั่งหยุด Loop ทันที</li>
+                    <li><span class="kw">continue</span> : ข้ามรอบนี้ไปรอบถัดไป</li>
+                    <li><span class="kw">len</span>(...) : หาความยาวของข้อมูล</li>
+                </ul>
+
+                <h3 class="archive-head">LV.4: ข้อมูลและฟังก์ชัน (DATA & FUNCTION)</h3>
+                <ul class="archive-list">
+                    <li>.append(...) : เพิ่มข้อมูลต่อท้าย List</li>
+                    <li>.remove(...) : ลบข้อมูลออกจาก List</li>
+                    <li>.sort() : เรียงลำดับข้อมูล</li>
+                    <li><span class="kw">def</span> name(): : ประกาศสร้างฟังก์ชันใหม่</li>
+                    <li><span class="kw">return</span> : ส่งค่าคำตอบออกจากฟังก์ชัน</li>
+                    <li><span class="kw">import</span> : นำเข้าคำสั่งเสริม (เช่น random)</li>
+                </ul>
+
+                <h3 class="archive-head">LV.5: ขั้นสูง (OOP & ALGO)</h3>
+                <ul class="archive-list">
+                    <li><span class="kw">class</span> : แม่พิมพ์สำหรับสร้างวัตถุ (Object)</li>
+                    <li><span class="kw">__init__</span> : ฟังก์ชันเริ่มต้นของ Class</li>
+                    <li><span class="kw">self</span> : ตัวแปรที่ใช้แทน "ตัวเอง" ใน Class</li>
+                    <li>list[-1] : เข้าถึงข้อมูลตัวสุดท้ายของ List</li>
+                    <li>.split() : ตัดข้อความให้เป็นคำๆ</li>
+                </ul>
+            </div>
+            <button class="cyber-btn" onclick="game.switchScene('menu')">[ BACK ]</button>
         </section>
 
         <section id="leaderboard-scene" class="scene hidden">
@@ -71,6 +129,7 @@
                 <ul class="info-list">
                     <li>👤 IDENTIFY: กรอกชื่อ Agent เพื่อบันทึกสถิติ</li>
                     <li>⏱️ TIME: เลือกเวลาภารกิจได้ 60s / 120s / 180s</li>
+                    <li>📚 ARCHIVE: มือใหม่สามารถอ่านหน้า Archive ก่อนเริ่มได้</li>
                 </ul>
                 <br>
                 <p>>> COST (ค่าธรรมเนียมตัวช่วย):</p>
