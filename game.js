@@ -80,24 +80,23 @@ class SoundSys {
    ========================================= */
 function spawnParticles(x, y) {
     const container = document.getElementById('particles-container');
-    const count = 15; // จำนวนอนุภาค
+    if(!container) return; 
+    const count = 15; 
     for(let i=0; i<count; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
         p.style.left = x + 'px';
         p.style.top = y + 'px';
         
-        // Random direction
         const tx = (Math.random() - 0.5) * 200;
         const ty = (Math.random() - 0.5) * 200;
         p.style.setProperty('--tx', `${tx}px`);
         p.style.setProperty('--ty', `${ty}px`);
         
-        // Random color (Green or White)
         p.style.background = Math.random() > 0.5 ? '#0f0' : '#fff';
 
         container.appendChild(p);
-        setTimeout(() => p.remove(), 500); // Remove after animation
+        setTimeout(() => p.remove(), 500); 
     }
 }
 
@@ -148,13 +147,11 @@ class GameEngine {
 
         this.updateHighScoreDisplay();
         
-        // Input Events & Mobile Fix
         this.ui.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.checkAnswer();
             else this.sound.playType();
         });
         
-        // Ensure input stays visible on mobile keyboard show
         this.ui.input.addEventListener('focus', () => {
             setTimeout(() => {
                 this.ui.input.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -226,7 +223,6 @@ class GameEngine {
         this.ui.input.value = '';
         this.ui.monster.classList.remove('hit');
         
-        // Boss Mode Logic
         if(this.currentQ.level >= 4) this.ui.monster.classList.add('boss-mode');
         else this.ui.monster.classList.remove('boss-mode');
     }
@@ -267,7 +263,6 @@ class GameEngine {
         this.ui.input.classList.add('valid');
         setTimeout(() => this.ui.input.classList.remove('valid'), 200);
 
-        // Particle Effect
         const mRect = this.ui.monster.getBoundingClientRect();
         spawnParticles(mRect.left + mRect.width/2, mRect.top + mRect.height/2);
 
@@ -371,19 +366,22 @@ class GameEngine {
         if(this.score > 3000) rank = "PYTHON MASTER";
         
         this.ui.finalRank.innerText = rank;
-        this.generateReview();
+        this.generateReview(); // เรียกฟังก์ชันสร้างเฉลย
         this.switchScene('over');
     }
 
+    // === จุดที่แก้ไข: เพิ่มการแสดง Explanation ===
     generateReview() {
         this.ui.reviewBox.innerHTML = ''; 
         this.sessionHistory.forEach((q, index) => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'review-item';
+            // ตรงนี้ครับที่เพิ่มบรรทัดสุดท้ายเข้ามา
             itemDiv.innerHTML = `
                 <div style="color: #fff; margin-bottom: 2px;">${index + 1}. ${q.text}</div>
                 <div class="review-code">${q.code.replace('____', '<span style="color:#f00">____</span>')}</div>
                 <div style="color:#0f0; font-size:0.8rem;">Ans: ${q.ans}</div>
+                <div style="color:#aaa; font-size:0.8rem; margin-top:5px; font-style:italic;">💡 ${q.explanation}</div>
             `;
             this.ui.reviewBox.appendChild(itemDiv);
         });
