@@ -1,5 +1,5 @@
 /* =========================================
-   PART 1: MATRIX RAIN (Optimized for Mobile)
+   PART 1: MATRIX RAIN
    ========================================= */
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
@@ -12,7 +12,7 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-const fontSize = 14; // เล็กลงนิดหน่อยเพื่อมือถือ
+const fontSize = 14;
 const columns = canvas.width / fontSize;
 const rainDrops = Array.from({ length: Math.ceil(columns) }).fill(1);
 
@@ -25,22 +25,89 @@ function drawMatrix() {
     for (let i = 0; i < rainDrops.length; i++) {
         const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
         ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-        if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            rainDrops[i] = 0;
-        }
+        if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) rainDrops[i] = 0;
         rainDrops[i]++;
     }
 }
-setInterval(drawMatrix, 50); // ช้าลงนิดนึงเพื่อประหยัดแบตมือถือ
+setInterval(drawMatrix, 50);
 
 /* =========================================
-   PART 2: GAME ENGINE
+   PART 2: AUDIO SYNTHESIZER
+   ========================================= */
+class SoundSys {
+    constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    playTone(freq, type, duration, vol = 0.1) {
+        if(this.ctx.state === 'suspended') this.ctx.resume();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = type; 
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        
+        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+    }
+
+    playStart() { 
+        this.playTone(400, 'square', 0.1); 
+        setTimeout(() => this.playTone(600, 'square', 0.1), 100); 
+        setTimeout(() => this.playTone(800, 'square', 0.3), 200);
+    }
+    playCorrect() { 
+        this.playTone(800, 'sine', 0.1); 
+        setTimeout(() => this.playTone(1200, 'sine', 0.2), 80); 
+    }
+    playWrong() { 
+        this.playTone(150, 'sawtooth', 0.2); 
+        setTimeout(() => this.playTone(100, 'sawtooth', 0.3), 100); 
+    }
+    playType() { this.playTone(600 + Math.random()*200, 'triangle', 0.03, 0.05); }
+    playWin() { 
+        [400, 500, 600, 800, 1000].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.2), i*150));
+    }
+}
+
+/* =========================================
+   PART 3: PARTICLE SYSTEM
+   ========================================= */
+function spawnParticles(x, y) {
+    const container = document.getElementById('particles-container');
+    const count = 15; // จำนวนอนุภาค
+    for(let i=0; i<count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        
+        // Random direction
+        const tx = (Math.random() - 0.5) * 200;
+        const ty = (Math.random() - 0.5) * 200;
+        p.style.setProperty('--tx', `${tx}px`);
+        p.style.setProperty('--ty', `${ty}px`);
+        
+        // Random color (Green or White)
+        p.style.background = Math.random() > 0.5 ? '#0f0' : '#fff';
+
+        container.appendChild(p);
+        setTimeout(() => p.remove(), 500); // Remove after animation
+    }
+}
+
+/* =========================================
+   PART 4: GAME ENGINE
    ========================================= */
 class GameEngine {
     constructor() {
-        // Game State
         this.score = 0;
-        this.highScore = parseInt(localStorage.getItem('pythonHunter_highScore')) || 0; // โหลด High Score
+        this.highScore = parseInt(localStorage.getItem('pythonHunter_highScore')) || 0;
         this.hp = 100;
         this.timer = 60;
         this.combo = 0;
@@ -51,13 +118,13 @@ class GameEngine {
         this.isPlaying = false;
         this.timerInterval = null;
         this.sessionHistory = [];
+        this.sound = new SoundSys();
 
-        // UI Mapping
         this.ui = {
             hpBar: document.getElementById('player-hp-bar'),
             score: document.getElementById('score-display'),
-            highScore: document.getElementById('highscore-display'), // ในเกม
-            menuHighScore: document.getElementById('menu-highscore'), // หน้าเมนู
+            highScore: document.getElementById('highscore-display'),
+            menuHighScore: document.getElementById('menu-highscore'),
             timer: document.getElementById('timer-display'),
             code: document.getElementById('code-display'),
             mission: document.getElementById('mission-text'),
@@ -79,26 +146,32 @@ class GameEngine {
             finalHighScore: document.getElementById('final-highscore')
         };
 
-        // Init Display
         this.updateHighScoreDisplay();
-
-        // Events
+        
+        // Input Events & Mobile Fix
         this.ui.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') this.checkAnswer();
+            else this.sound.playType();
         });
+        
+        // Ensure input stays visible on mobile keyboard show
+        this.ui.input.addEventListener('focus', () => {
+            setTimeout(() => {
+                this.ui.input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+
         document.getElementById('attack-btn').addEventListener('click', () => this.checkAnswer());
     }
 
     start() {
+        this.sound.playStart();
         this.switchScene('game');
         this.resetStats();
         this.isPlaying = true;
         this.nextTurn();
         this.startTimer();
         this.ui.input.focus();
-        
-        // Scroll to input on mobile
-        setTimeout(() => this.ui.input.scrollIntoView({ behavior: 'smooth' }), 300);
     }
 
     showTutorial() { this.switchScene('tutorial'); }
@@ -117,14 +190,12 @@ class GameEngine {
         this.potions = 3;
         this.skips = 3;
         this.sessionHistory = [];
-        
         this.ui.btnHint.innerText = `HINT(${this.hints})`;
         this.ui.btnPotion.innerText = `HP(${this.potions})`;
         this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
         this.ui.btnHint.disabled = false;
         this.ui.btnPotion.disabled = false;
         this.ui.btnSkip.disabled = false;
-        
         this.updateHUD();
     }
 
@@ -148,12 +219,30 @@ class GameEngine {
         this.currentQ = pool[Math.floor(Math.random() * pool.length)];
         this.sessionHistory.push(this.currentQ);
 
-        this.ui.code.innerText = this.currentQ.code; 
+        this.typewriterEffect(this.currentQ.code, this.ui.code);
         const typeTag = `<span style="color:#0f0;">[TYPE: ${this.currentQ.type}]</span>`;
         this.ui.mission.innerHTML = `${typeTag} ${this.currentQ.text}`;
         
         this.ui.input.value = '';
         this.ui.monster.classList.remove('hit');
+        
+        // Boss Mode Logic
+        if(this.currentQ.level >= 4) this.ui.monster.classList.add('boss-mode');
+        else this.ui.monster.classList.remove('boss-mode');
+    }
+
+    typewriterEffect(text, element) {
+        element.innerHTML = '';
+        let i = 0;
+        const speed = 15; 
+        const type = () => {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            }
+        };
+        type();
     }
 
     checkAnswer() {
@@ -168,6 +257,7 @@ class GameEngine {
     }
 
     handleSuccess() {
+        this.sound.playCorrect();
         this.combo++;
         const bonus = (this.combo * 10) + (this.currentQ.level * 20);
         this.score += 100 + bonus;
@@ -177,13 +267,17 @@ class GameEngine {
         this.ui.input.classList.add('valid');
         setTimeout(() => this.ui.input.classList.remove('valid'), 200);
 
+        // Particle Effect
+        const mRect = this.ui.monster.getBoundingClientRect();
+        spawnParticles(mRect.left + mRect.width/2, mRect.top + mRect.height/2);
+
         this.ui.monster.classList.add('hit');
         setTimeout(() => this.ui.monster.classList.remove('hit'), 300);
-
-        this.nextTurn();
+        setTimeout(() => this.nextTurn(), 400);
     }
 
     handleFail() {
+        this.sound.playWrong();
         this.combo = 0;
         this.hp -= 20;
         this.showDamage("-20 HP", 'danger');
@@ -196,6 +290,7 @@ class GameEngine {
 
     useHint() {
         if (this.hints > 0) {
+            this.sound.playStart();
             this.hints--;
             this.ui.btnHint.innerText = `HINT(${this.hints})`;
             this.ui.input.value = this.currentQ.ans.substring(0, 1);
@@ -206,6 +301,7 @@ class GameEngine {
 
     usePotion() {
         if (this.potions > 0 && this.hp < 100) {
+            this.sound.playStart();
             this.potions--;
             this.hp = Math.min(100, this.hp + 30);
             this.ui.btnPotion.innerText = `HP(${this.potions})`;
@@ -217,6 +313,7 @@ class GameEngine {
 
     useSkip() {
         if (this.skips > 0) {
+            this.sound.playStart();
             this.skips--;
             this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
             this.showDamage("SKIPPED", 'critical');
@@ -256,10 +353,10 @@ class GameEngine {
     }
 
     gameOver() {
+        this.sound.playWin();
         this.isPlaying = false;
         clearInterval(this.timerInterval);
         
-        // High Score Logic
         if (this.score > this.highScore) {
             this.highScore = this.score;
             localStorage.setItem('pythonHunter_highScore', this.highScore);
@@ -274,8 +371,6 @@ class GameEngine {
         if(this.score > 3000) rank = "PYTHON MASTER";
         
         this.ui.finalRank.innerText = rank;
-        this.ui.finalRank.style.color = "#0f0";
-
         this.generateReview();
         this.switchScene('over');
     }
