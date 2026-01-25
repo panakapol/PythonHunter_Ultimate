@@ -1,5 +1,5 @@
 /* =========================================
-   PART 1: MATRIX RAIN EFFECT
+   PART 1: MATRIX RAIN (Optimized for Mobile)
    ========================================= */
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
@@ -11,8 +11,8 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>/\\*&^%$#@!';
-const fontSize = 16;
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const fontSize = 14; // เล็กลงนิดหน่อยเพื่อมือถือ
 const columns = canvas.width / fontSize;
 const rainDrops = Array.from({ length: Math.ceil(columns) }).fill(1);
 
@@ -31,32 +31,33 @@ function drawMatrix() {
         rainDrops[i]++;
     }
 }
-setInterval(drawMatrix, 30);
-
+setInterval(drawMatrix, 50); // ช้าลงนิดนึงเพื่อประหยัดแบตมือถือ
 
 /* =========================================
    PART 2: GAME ENGINE
    ========================================= */
 class GameEngine {
     constructor() {
-        // State
+        // Game State
         this.score = 0;
+        this.highScore = parseInt(localStorage.getItem('pythonHunter_highScore')) || 0; // โหลด High Score
         this.hp = 100;
-        this.maxHp = 100;
         this.timer = 60;
         this.combo = 0;
         this.hints = 3;
         this.potions = 3;
-        this.skips = 3; // เพิ่มตัวแปร Skip
+        this.skips = 3;
         this.currentQ = null;
         this.isPlaying = false;
         this.timerInterval = null;
-        this.sessionHistory = []; // เก็บประวัติข้อที่เจอเพื่อเฉลย
-        
-        // DOM Elements
+        this.sessionHistory = [];
+
+        // UI Mapping
         this.ui = {
             hpBar: document.getElementById('player-hp-bar'),
             score: document.getElementById('score-display'),
+            highScore: document.getElementById('highscore-display'), // ในเกม
+            menuHighScore: document.getElementById('menu-highscore'), // หน้าเมนู
             timer: document.getElementById('timer-display'),
             code: document.getElementById('code-display'),
             mission: document.getElementById('mission-text'),
@@ -65,8 +66,8 @@ class GameEngine {
             monster: document.getElementById('monster-sprite'),
             btnHint: document.getElementById('btn-hint'),
             btnPotion: document.getElementById('btn-potion'),
-            btnSkip: document.getElementById('btn-skip'), // ปุ่ม Skip
-            reviewBox: document.getElementById('review-box'), // กล่องเฉลย
+            btnSkip: document.getElementById('btn-skip'),
+            reviewBox: document.getElementById('review-box'),
             scenes: {
                 menu: document.getElementById('menu-scene'),
                 game: document.getElementById('game-scene'),
@@ -74,8 +75,12 @@ class GameEngine {
                 tutorial: document.getElementById('tutorial-scene')
             },
             finalScore: document.getElementById('final-score'),
-            finalRank: document.getElementById('final-rank')
+            finalRank: document.getElementById('final-rank'),
+            finalHighScore: document.getElementById('final-highscore')
         };
+
+        // Init Display
+        this.updateHighScoreDisplay();
 
         // Events
         this.ui.input.addEventListener('keydown', (e) => {
@@ -91,20 +96,16 @@ class GameEngine {
         this.nextTurn();
         this.startTimer();
         this.ui.input.focus();
+        
+        // Scroll to input on mobile
+        setTimeout(() => this.ui.input.scrollIntoView({ behavior: 'smooth' }), 300);
     }
 
-    showTutorial() {
-        this.switchScene('tutorial');
-    }
+    showTutorial() { this.switchScene('tutorial'); }
 
     switchScene(sceneName) {
-        Object.values(this.ui.scenes).forEach(el => {
-            if(el) { el.classList.add('hidden'); el.classList.remove('active'); }
-        });
-        if(this.ui.scenes[sceneName]) {
-            this.ui.scenes[sceneName].classList.remove('hidden');
-            this.ui.scenes[sceneName].classList.add('active');
-        }
+        Object.values(this.ui.scenes).forEach(el => { if(el) { el.classList.add('hidden'); el.classList.remove('active'); } });
+        if(this.ui.scenes[sceneName]) { this.ui.scenes[sceneName].classList.remove('hidden'); this.ui.scenes[sceneName].classList.add('active'); }
     }
 
     resetStats() {
@@ -115,11 +116,11 @@ class GameEngine {
         this.hints = 3;
         this.potions = 3;
         this.skips = 3;
-        this.sessionHistory = []; // ล้างประวัติเฉลย
+        this.sessionHistory = [];
         
-        this.ui.btnHint.innerText = `DECRYPT_KEY (${this.hints})`;
-        this.ui.btnPotion.innerText = `REPAIR_KIT (${this.potions})`;
-        this.ui.btnSkip.innerText = `BYPASS_FIREWALL (${this.skips})`;
+        this.ui.btnHint.innerText = `HINT(${this.hints})`;
+        this.ui.btnPotion.innerText = `HP(${this.potions})`;
+        this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
         this.ui.btnHint.disabled = false;
         this.ui.btnPotion.disabled = false;
         this.ui.btnSkip.disabled = false;
@@ -138,30 +139,17 @@ class GameEngine {
     }
 
     nextTurn() {
-        let availableQuestions;
+        let pool;
+        if (this.score < 500) pool = QUESTION_DATABASE.filter(q => q.level <= 2);
+        else if (this.score < 1500) pool = QUESTION_DATABASE.filter(q => q.level <= 3);
+        else pool = QUESTION_DATABASE.filter(q => q.level >= 3);
 
-        // Logic เลือกโจทย์ตามคะแนน (Adaptive)
-        if (this.score < 500) {
-            availableQuestions = QUESTION_DATABASE.filter(q => q.level <= 2);
-        } else if (this.score < 1500) {
-            availableQuestions = QUESTION_DATABASE.filter(q => q.level <= 3);
-        } else {
-            availableQuestions = QUESTION_DATABASE.filter(q => q.level >= 3);
-        }
-
-        if (!availableQuestions || availableQuestions.length === 0) {
-            availableQuestions = QUESTION_DATABASE;
-        }
-
-        // สุ่มโจทย์ใหม่
-        this.currentQ = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
-        
-        // บันทึกลงประวัติเพื่อใช้เฉลยตอนจบ (เก็บ Object โจทย์ไว้)
+        if (!pool || !pool.length) pool = QUESTION_DATABASE;
+        this.currentQ = pool[Math.floor(Math.random() * pool.length)];
         this.sessionHistory.push(this.currentQ);
 
-        // Display
         this.ui.code.innerText = this.currentQ.code; 
-        const typeTag = `<span style="color:#0f0; font-weight:bold;">[ PROCESS: ${this.currentQ.type} ]</span>`;
+        const typeTag = `<span style="color:#0f0;">[TYPE: ${this.currentQ.type}]</span>`;
         this.ui.mission.innerHTML = `${typeTag} ${this.currentQ.text}`;
         
         this.ui.input.value = '';
@@ -170,11 +158,8 @@ class GameEngine {
 
     checkAnswer() {
         if (!this.isPlaying) return;
-        
         const playerAns = this.ui.input.value.trim();
-        const correctAns = this.currentQ.ans;
-
-        if (playerAns.toLowerCase() === correctAns.toLowerCase()) {
+        if (playerAns.toLowerCase() === this.currentQ.ans.toLowerCase()) {
             this.handleSuccess();
         } else {
             this.handleFail();
@@ -188,7 +173,7 @@ class GameEngine {
         this.score += 100 + bonus;
         this.timer = Math.min(60, this.timer + 5);
         
-        this.showDamage(`CALCULATION COMPLETE! +${100 + bonus}`, 'critical');
+        this.showDamage(`+${100 + bonus}`, 'critical');
         this.ui.input.classList.add('valid');
         setTimeout(() => this.ui.input.classList.remove('valid'), 200);
 
@@ -201,27 +186,20 @@ class GameEngine {
     handleFail() {
         this.combo = 0;
         this.hp -= 20;
-        this.showDamage("LOGIC ERROR! -20 HP", 'danger');
-        
+        this.showDamage("-20 HP", 'danger');
         document.body.classList.add('shake');
         setTimeout(() => document.body.classList.remove('shake'), 300);
-
         this.ui.input.value = '';
         this.ui.input.focus();
-
         if (this.hp <= 0) this.gameOver();
     }
 
     useHint() {
         if (this.hints > 0) {
             this.hints--;
-            this.ui.btnHint.innerText = `DECRYPT_KEY (${this.hints})`;
-            
-            const hintText = this.currentQ.ans.substring(0, 1);
-            this.ui.input.value = hintText;
+            this.ui.btnHint.innerText = `HINT(${this.hints})`;
+            this.ui.input.value = this.currentQ.ans.substring(0, 1);
             this.ui.input.focus();
-            
-            this.showDamage("HINT INJECTED", 'critical');
             if (this.hints === 0) this.ui.btnHint.disabled = true;
         }
     }
@@ -230,24 +208,19 @@ class GameEngine {
         if (this.potions > 0 && this.hp < 100) {
             this.potions--;
             this.hp = Math.min(100, this.hp + 30);
-            this.ui.btnPotion.innerText = `REPAIR_KIT (${this.potions})`;
-            this.showDamage("SYSTEM REPAIRED +30 HP", 'critical');
+            this.ui.btnPotion.innerText = `HP(${this.potions})`;
+            this.showDamage("+30 HP", 'critical');
             this.updateHUD();
             if (this.potions === 0) this.ui.btnPotion.disabled = true;
         }
     }
 
-    // ฟังก์ชัน Skip (ข้ามข้อ)
     useSkip() {
         if (this.skips > 0) {
             this.skips--;
-            this.ui.btnSkip.innerText = `BYPASS_FIREWALL (${this.skips})`;
-            
-            this.showDamage("DATA SKIPPED >> NEXT", 'critical');
-            
-            // ข้ามโดยไม่เสียเลือดและไม่คิดคะแนน
+            this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
+            this.showDamage("SKIPPED", 'critical');
             this.nextTurn();
-
             if (this.skips === 0) this.ui.btnSkip.disabled = true;
         }
     }
@@ -255,9 +228,7 @@ class GameEngine {
     showDamage(text, type) {
         const dmg = document.getElementById('damage-text');
         dmg.innerText = text;
-        dmg.className = 'damage-text'; 
-        dmg.classList.add(type);
-        
+        dmg.className = 'damage-text ' + type;
         dmg.style.animation = 'none';
         dmg.offsetHeight; 
         dmg.style.animation = 'floatUp 1s ease-out';
@@ -267,58 +238,61 @@ class GameEngine {
         this.ui.score.innerText = this.score.toString().padStart(5, '0');
         this.ui.timer.innerText = this.timer;
         this.ui.hpBar.style.width = this.hp + '%';
+        this.ui.hpBar.style.background = this.hp > 50 ? '#0f0' : (this.hp > 20 ? '#ff0' : '#f00');
         
-        if (this.hp > 50) this.ui.hpBar.style.background = '#0f0';
-        else if (this.hp > 20) this.ui.hpBar.style.background = '#ff0';
-        else this.ui.hpBar.style.background = '#f00';
-
         if(this.combo > 1) {
             this.ui.combo.classList.remove('hidden');
-            this.ui.combo.innerText = `COMBO THREAD x${this.combo}`;
+            this.ui.combo.innerText = `x${this.combo}`;
         } else {
             this.ui.combo.classList.add('hidden');
         }
+    }
+
+    updateHighScoreDisplay() {
+        const text = this.highScore.toString().padStart(5, '0');
+        this.ui.menuHighScore.innerText = text;
+        this.ui.highScore.innerText = text;
+        if(this.ui.finalHighScore) this.ui.finalHighScore.innerText = text;
     }
 
     gameOver() {
         this.isPlaying = false;
         clearInterval(this.timerInterval);
         
+        // High Score Logic
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem('pythonHunter_highScore', this.highScore);
+            this.updateHighScoreDisplay();
+        }
+
         this.ui.finalScore.innerText = this.score;
+        this.ui.finalHighScore.innerText = this.highScore;
         
         let rank = "BEGINNER";
-        if(this.score > 1000) rank = "LOGICIAN";
-        if(this.score > 2500) rank = "ALGORITHM MASTER";
-        if(this.score > 4000) rank = "THE PYTHON HUNTER";
+        if(this.score > 1000) rank = "INTERMEDIATE";
+        if(this.score > 3000) rank = "PYTHON MASTER";
         
         this.ui.finalRank.innerText = rank;
         this.ui.finalRank.style.color = "#0f0";
 
-        // สร้าง Review (เฉลย)
         this.generateReview();
-        
         this.switchScene('over');
     }
 
-    // ฟังก์ชันสร้างรายการเฉลย HTML
     generateReview() {
-        this.ui.reviewBox.innerHTML = ''; // เคลียร์ของเก่า
-        
-        // กรองเอาข้อที่ซ้ำกันออก (Optional) หรือจะโชว์หมดก็ได้
-        // อันนี้โชว์หมดตามลำดับที่เจอ
+        this.ui.reviewBox.innerHTML = ''; 
         this.sessionHistory.forEach((q, index) => {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'review-item';
             itemDiv.innerHTML = `
-                <div style="color: #fff; margin-bottom: 5px;">${index + 1}. ${q.text}</div>
+                <div style="color: #fff; margin-bottom: 2px;">${index + 1}. ${q.text}</div>
                 <div class="review-code">${q.code.replace('____', '<span style="color:#f00">____</span>')}</div>
-                <div class="review-ans">>> ตอบ: ${q.ans}</div>
-                <span class="review-explain">💡 ${q.explanation}</span>
+                <div style="color:#0f0; font-size:0.8rem;">Ans: ${q.ans}</div>
             `;
             this.ui.reviewBox.appendChild(itemDiv);
         });
     }
 }
 
-// Start Game Engine
 const game = new GameEngine();

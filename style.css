@@ -2,18 +2,16 @@
     --neon-green: #0f0;
     --neon-red: #f00;
     --neon-blue: #0ff;
+    --neon-yellow: #ff0;
     --bg-dark: #050505;
-    --glass: rgba(0, 20, 0, 0.7);
+    --glass: rgba(0, 20, 0, 0.85);
 }
 
-@font-face {
-    font-family: 'HackerFont';
-    src: local('Courier New'); /* ใช้ Font พื้นฐานไปก่อนเพื่อความง่าย */
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
-    overflow: hidden;
+    overflow: hidden; /* ป้องกันการเลื่อนหน้าจอ */
     background: #000;
     color: var(--neon-green);
     font-family: 'Courier New', monospace;
@@ -23,166 +21,176 @@ body {
     align-items: center;
 }
 
-/* --- CANVAS MATRIX RAIN --- */
-#matrix-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 0;
-    opacity: 0.3;
-}
+/* MATRIX & CRT */
+#matrix-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.25; }
+.crt-overlay { position: absolute; inset: 0; background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.8) 100%); z-index: 99; pointer-events: none; }
+.scanline { width: 100%; height: 100%; position: absolute; background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 4px; z-index: 98; pointer-events: none; }
 
-/* --- CRT & GLITCH EFFECTS --- */
-.crt-overlay {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle, rgba(18, 16, 16, 0) 50%, rgba(0,0,0,0.6) 100%);
-    z-index: 99;
-    pointer-events: none;
-    box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
-}
-
-.scanline {
-    width: 100%; height: 100%;
-    position: absolute;
-    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
-    background-size: 100% 4px;
-    z-index: 98;
-    pointer-events: none;
-    animation: scrollScan 10s linear infinite;
-}
-
+/* LAYOUT */
 .main-container {
     position: relative;
-    z-index: 10;
-    width: 90%; max-width: 800px;
-    height: 90vh;
+    z-index: 100;
+    width: 95%;
+    max-width: 800px;
+    height: 100vh; /* เต็มความสูงจอ */
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding: 10px;
 }
 
-.scene { display: none; text-align: center; }
-.scene.active { display: block; animation: fadeIn 0.5s; }
-.hidden { display: none !important; }
+.scene { display: none; text-align: center; width: 100%; }
+.scene.active { display: block; animation: fadeIn 0.3s; }
 
-/* --- UI ELEMENTS --- */
+/* TITLE & TEXT */
+.glitch-title { font-size: 2.5rem; text-shadow: 2px 2px var(--neon-red); margin-bottom: 20px; }
+.terminal-box { border: 1px solid var(--neon-green); padding: 20px; background: var(--glass); margin-bottom: 20px; }
+.scrollable-box { max-height: 50vh; overflow-y: auto; text-align: left; }
+.info-list { text-align: left; padding-left: 20px; color: #ccc; }
+
+/* BUTTONS */
 .cyber-btn {
     background: transparent;
-    border: 2px solid var(--neon-green);
+    border: 1px solid var(--neon-green);
     color: var(--neon-green);
-    padding: 15px 30px;
-    font-size: 1.2rem;
+    padding: 12px 24px;
+    font-size: 1rem;
     cursor: pointer;
-    margin: 10px;
-    text-transform: uppercase;
+    margin: 5px;
     transition: 0.2s;
-    box-shadow: 0 0 10px var(--neon-green);
+    font-weight: bold;
 }
-.cyber-btn:hover {
-    background: var(--neon-green);
-    color: #000;
-    box-shadow: 0 0 20px var(--neon-green);
-}
+.cyber-btn:active { background: var(--neon-green); color: #000; }
 
-/* --- GAME HUD --- */
+/* GAME HUD */
 .hud-top {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
+    gap: 5px;
+    margin-bottom: 5px;
 }
 .hud-box {
     border: 1px solid var(--neon-green);
-    padding: 10px;
     background: var(--glass);
-    flex: 1; margin: 0 5px;
+    flex: 1;
+    padding: 5px;
+    text-align: center;
 }
+.hud-box span { font-size: 0.7rem; color: #aaa; display: block; }
+.hud-box h2 { margin: 0; font-size: 1.2rem; }
 
-.hp-bar-bg {
-    width: 100%; height: 20px;
-    background: #333;
-    border: 1px solid #555;
-    margin-top: 5px;
-}
-.hp-bar-fill {
-    width: 100%; height: 100%;
-    background: var(--neon-red);
-    transition: width 0.3s;
-    box-shadow: 0 0 10px var(--neon-red);
-}
+.hp-container { margin-bottom: 10px; text-align: left; font-size: 0.8rem; }
+.hp-bar-bg { width: 100%; height: 10px; background: #333; border: 1px solid #555; }
+.hp-bar-fill { height: 100%; background: var(--neon-green); transition: width 0.3s; }
 
-/* --- MONSTER --- */
-.battle-arena {
-    height: 250px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-}
+/* ARENA */
+.battle-arena { height: 15vh; display: flex; justify-content: center; align-items: center; position: relative; }
 .monster-base {
-    width: 120px; height: 120px;
-    background: #fff; /* Placeholder for shape */
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    width: 80px; height: 80px;
     background: radial-gradient(circle, #aa00ff, #220044);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     animation: float 3s ease-in-out infinite;
     position: relative;
-    box-shadow: 0 0 30px #aa00ff;
 }
-.m-eye {
-    width: 40px; height: 10px;
-    background: var(--neon-red);
-    position: absolute;
-    top: 40px; left: 40px;
-    animation: blink 2s infinite;
-    box-shadow: 0 0 10px var(--neon-red);
-}
+.m-eye { width: 30px; height: 8px; background: var(--neon-red); position: absolute; top: 30px; left: 25px; animation: blink 2s infinite; }
+.damage-text { position: absolute; top: -30px; font-weight: bold; font-size: 1.5rem; opacity: 0; }
 
-/* --- CODE CONSOLE --- */
+/* CONSOLE INPUT */
 .console-wrapper {
     background: rgba(0,0,0,0.9);
-    border: 2px solid var(--neon-blue);
-    padding: 20px;
+    border: 1px solid var(--neon-blue);
+    padding: 10px;
     border-radius: 5px;
-    box-shadow: 0 0 15px var(--neon-blue);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
+.console-header { display: flex; justify-content: space-between; font-size: 0.8rem; }
 .code-editor {
     background: #111;
-    padding: 15px;
-    border-left: 3px solid var(--neon-green);
-    margin: 10px 0;
-    font-size: 1.4rem;
+    padding: 10px;
+    border-left: 2px solid var(--neon-green);
+    font-size: 1rem;
     text-align: left;
     overflow-x: auto;
-}
-.input-zone {
+    white-space: pre-wrap;
+    min-height: 60px;
     display: flex;
     align-items: center;
-    margin-top: 10px;
 }
+.input-zone { display: flex; align-items: center; gap: 5px; }
+.prompt { color: var(--neon-green); }
 #player-input {
     flex: 1;
     background: transparent;
     border: none;
-    border-bottom: 2px solid var(--neon-green);
+    border-bottom: 1px solid var(--neon-green);
     color: #fff;
-    font-size: 1.2rem;
-    margin-left: 10px;
+    font-size: 1rem;
+    padding: 5px;
     font-family: monospace;
 }
-#player-input:focus { outline: none; border-color: var(--neon-blue); }
-
-.skill-btn {
-    background: #222; border: 1px solid #555;
-    color: #aaa; padding: 5px 10px; margin: 5px;
-    cursor: pointer; font-size: 0.8rem;
+.attack-btn {
+    background: var(--neon-green); color: #000; border: none;
+    padding: 5px 15px; font-weight: bold; cursor: pointer;
 }
-.skill-btn:hover { color: #fff; border-color: #fff; }
 
-/* --- ANIMATIONS --- */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+.power-ups { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+.skill-btn {
+    background: #222; border: 1px solid #555; color: #ccc;
+    padding: 8px; font-size: 0.75rem; cursor: pointer; flex: 1;
+}
+
+/* GAMEOVER & REVIEW */
+.review-container {
+    height: 150px; /* จำกัดความสูงบนมือถือ */
+    overflow-y: auto;
+    background: rgba(20,20,20,0.9);
+    border: 1px solid #0f0;
+    padding: 10px;
+    text-align: left;
+    font-size: 0.85rem;
+}
+.review-item { border-bottom: 1px solid #333; padding: 8px 0; }
+.review-code { color: var(--neon-blue); background: #222; padding: 2px; }
+
+/* ANIMATIONS */
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes blink { 0%,90% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
-@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
-
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
 .shake { animation: shake 0.3s; }
-.damage-text { position: absolute; color: var(--neon-red); font-weight: bold; font-size: 2rem; opacity: 0; transition: 0.5s; top: -50px;}
+@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); } }
+.valid { border-color: #0f0 !important; box-shadow: 0 0 10px #0f0; }
+
+/* =========================================
+   📱 MEDIA QUERIES FOR MOBILE & TABLET
+   ========================================= */
+
+/* Tablet / iPad */
+@media (max-width: 1024px) {
+    .main-container { width: 90%; }
+    .glitch-title { font-size: 2rem; }
+}
+
+/* Mobile Phones (iPhone/Android) */
+@media (max-width: 600px) {
+    .glitch-title { font-size: 1.8rem; }
+    
+    /* ปรับ Layout HUD ให้เล็กลง */
+    .hud-top { flex-wrap: nowrap; } 
+    .hud-box h2 { font-size: 1rem; }
+    .hud-box span { font-size: 0.6rem; }
+    
+    /* ย่อส่วนแสดงผลให้พอดีจอ */
+    .battle-arena { height: 12vh; }
+    .monster-base { width: 60px; height: 60px; }
+    
+    .console-wrapper { padding: 8px; }
+    .code-editor { font-size: 0.9rem; min-height: 50px; }
+    
+    /* ปุ่มสกิลเรียงให้กดง่าย */
+    .skill-btn { padding: 10px 5px; }
+    
+    /* หน้าจอจบเกม */
+    .review-container { height: 200px; }
+}
