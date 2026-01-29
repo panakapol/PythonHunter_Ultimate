@@ -39,7 +39,7 @@ class SoundSys {
 }
 
 /* =========================================
-   PART 3: GAME ENGINE (UPDATED)
+   PART 3: GAME ENGINE (FIXED ITEM USAGE)
    ========================================= */
 class GameEngine {
     constructor() {
@@ -48,17 +48,21 @@ class GameEngine {
         this.selectedTime = 60;
         this.winScore = 800;
         this.score = 0; this.hp = 100; this.timer = 60;
-        this.consecutiveWins = 0; // ตัวนับตอบถูกติดกัน
+        this.consecutiveWins = 0; 
         this.questionPool = []; 
         this.sessionHistory = [];
         this.sound = new SoundSys();
         this.leaderboard = JSON.parse(localStorage.getItem('pythonHunter_lb')) || [];
+        
+        // Item Counts
+        this.hints = 1; this.potions = 1; this.skips = 1;
 
         this.ui = {
             scenes: { menu: document.getElementById('menu-scene'), mission: document.getElementById('mission-select-scene'), game: document.getElementById('game-scene'), over: document.getElementById('gameover-scene'), leaderboard: document.getElementById('leaderboard-scene'), archive: document.getElementById('archive-scene') },
             input: document.getElementById('player-input'), code: document.getElementById('code-display'), qText: document.getElementById('question-text-display'), score: document.getElementById('score-display'), timer: document.getElementById('timer-display'), hpBar: document.getElementById('player-hp-bar'),
             monster: document.getElementById('monster-sprite'), damageText: document.getElementById('damage-text'), comboDisplay: document.getElementById('combo-display'),
-            finalName: document.getElementById('final-name'), finalScore: document.getElementById('final-score'), finalMode: document.getElementById('final-mode'), reviewBox: document.getElementById('review-box'), endTitle: document.getElementById('end-title')
+            finalName: document.getElementById('final-name'), finalScore: document.getElementById('final-score'), finalMode: document.getElementById('final-mode'), reviewBox: document.getElementById('review-box'), endTitle: document.getElementById('end-title'),
+            btnHint: document.getElementById('btn-hint'), btnPotion: document.getElementById('btn-potion'), btnSkip: document.getElementById('btn-skip')
         };
 
         this.updateLeaderboardDisplay();
@@ -73,10 +77,17 @@ class GameEngine {
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         [...document.querySelectorAll('.time-btn')].find(b => b.innerText.includes(s)).classList.add('active');
         
-        // --- NEW WIN CONDITIONS ---
-        if(s === 60) this.winScore = 800;       // 60s -> 800 pts
-        else if(s === 120) this.winScore = 1500; // 120s -> 1500 pts
-        else if(s === 180) this.winScore = 2000; // 180s -> 2000 pts
+        // --- Set Difficulty & Items ---
+        if(s === 60) {
+            this.winScore = 800;
+            this.hints = 1; this.potions = 1; this.skips = 1;
+        } else if(s === 120) {
+            this.winScore = 1500;
+            this.hints = 2; this.potions = 2; this.skips = 2;
+        } else if(s === 180) {
+            this.winScore = 2000;
+            this.hints = 3; this.potions = 3; this.skips = 3;
+        }
     }
 
     goToMissionSelect() {
@@ -96,25 +107,32 @@ class GameEngine {
     startMission(mode) {
         this.currentMode = mode;
         this.switchScene('game');
+        
+        // Reset Stats (ใช้ค่า Item ที่ตั้งไว้จาก setTime)
         this.score = 0; this.hp = 100; this.timer = this.selectedTime;
         this.consecutiveWins = 0;
         this.sessionHistory = [];
         
-        // --- SURVIVAL LOGIC (Level 4 & 5 Only) ---
-        let rawQuestions = [];
-        if (mode === 'SURVIVAL') {
-            rawQuestions = QUESTION_DATABASE.filter(q => q.level >= 4);
-        } else {
-            rawQuestions = QUESTION_DATABASE.filter(q => q.mode === mode);
-        }
+        // Reset Item Counts (ตามเวลาที่เลือก)
+        if(this.timer === 60) { this.hints = 1; this.potions = 1; this.skips = 1; }
+        else if(this.timer === 120) { this.hints = 2; this.potions = 2; this.skips = 2; }
+        else { this.hints = 3; this.potions = 3; this.skips = 3; }
+
+        let rawQuestions = (mode === 'SURVIVAL') ? QUESTION_DATABASE.filter(q => q.level >= 4) : QUESTION_DATABASE.filter(q => q.mode === mode);
         if(rawQuestions.length === 0) rawQuestions = QUESTION_DATABASE;
-        
         this.questionPool = this.shuffleArray([...rawQuestions]); 
 
+        // UI Reset
         this.ui.score.innerText = "0"; this.ui.timer.innerText = this.timer; this.ui.hpBar.style.width = "100%";
         document.getElementById('current-player-display').innerText = this.playerName;
         document.getElementById('mode-display').innerText = mode;
         this.ui.comboDisplay.innerText = "";
+        
+        // Update Buttons
+        this.ui.btnHint.disabled = false; this.ui.btnPotion.disabled = false; this.ui.btnSkip.disabled = false;
+        this.ui.btnHint.innerText = `HINT (${this.hints})`;
+        this.ui.btnPotion.innerText = `HP (${this.potions})`;
+        this.ui.btnSkip.innerText = `SKIP (${this.skips})`;
         
         this.isPlaying = true;
         this.nextTurn();
@@ -146,13 +164,12 @@ class GameEngine {
             this.ui.score.innerText = this.score;
             this.sound.playCorrect();
             
-            // --- TIME BONUS LOGIC ---
             this.consecutiveWins++;
             if (this.consecutiveWins === 3) {
                 this.timer += 10;
                 this.sound.playBonus();
                 this.showFloatingText("+10s TIME BONUS!", "#ffff00");
-                this.consecutiveWins = 0; // Reset counter
+                this.consecutiveWins = 0;
             } else {
                 this.showFloatingText("+150", "#00ff00");
             }
@@ -168,7 +185,7 @@ class GameEngine {
             }
             setTimeout(() => this.nextTurn(), 500);
         } else {
-            this.consecutiveWins = 0; // Reset Combo
+            this.consecutiveWins = 0;
             this.hp -= 20;
             this.ui.hpBar.style.width = this.hp + "%";
             this.sound.playWrong();
@@ -185,25 +202,37 @@ class GameEngine {
         setTimeout(() => { this.ui.damageText.style.opacity = 0; this.ui.damageText.style.top = "-20px"; }, 800);
     }
 
+    // --- ITEM USAGE FUNCTIONS ---
     useHint() {
         if(this.hints > 0) {
-            this.hints--; this.score = Math.max(0, this.score - 50);
+            this.hints--; 
+            this.score = Math.max(0, this.score - 50);
+            this.ui.score.innerText = this.score;
             this.ui.input.value = this.currentQ.ans.substring(0, 1);
-            document.getElementById('btn-hint').innerText = `HINT(${this.hints})`;
+            this.ui.input.focus();
+            this.ui.btnHint.innerText = `HINT (${this.hints})`;
+            if(this.hints === 0) this.ui.btnHint.disabled = true;
         }
     }
+    
     usePotion() {
         if(this.potions > 0 && this.hp < 100) {
-            this.potions--; this.hp = Math.min(100, this.hp + 30);
-            document.getElementById('btn-potion').innerText = `HP(${this.potions})`;
+            this.potions--;
+            this.hp = Math.min(100, this.hp + 30);
             this.ui.hpBar.style.width = this.hp + "%";
+            this.ui.btnPotion.innerText = `HP (${this.potions})`;
+            if(this.potions === 0) this.ui.btnPotion.disabled = true;
         }
     }
+    
     useSkip() {
         if(this.skips > 0) {
-            this.skips--; this.score = Math.max(0, this.score - 100);
-            document.getElementById('btn-skip').innerText = `SKIP(${this.skips})`;
-            this.consecutiveWins = 0; // Reset combo on skip
+            this.skips--;
+            this.score = Math.max(0, this.score - 100);
+            this.ui.score.innerText = this.score;
+            this.ui.btnSkip.innerText = `SKIP (${this.skips})`;
+            this.consecutiveWins = 0; // Reset Combo
+            if(this.skips === 0) this.ui.btnSkip.disabled = true;
             this.nextTurn();
         }
     }
@@ -231,6 +260,7 @@ class GameEngine {
         this.ui.finalName.innerText = this.playerName;
         this.ui.finalScore.innerText = this.score;
         this.ui.finalMode.innerText = this.currentMode;
+        
         this.ui.reviewBox.innerHTML = "";
         this.sessionHistory.forEach((q, i) => {
             this.ui.reviewBox.innerHTML += `
