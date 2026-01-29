@@ -1,387 +1,277 @@
 /* =========================================
-   PART 1: MATRIX RAIN
+   PART 1: MATRIX VISUALS
    ========================================= */
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-const fontSize = 14;
-const columns = canvas.width / fontSize;
-const rainDrops = Array.from({ length: Math.ceil(columns) }).fill(1);
-
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+const rainDrops = Array.from({ length: 50 }).fill(1);
 function drawMatrix() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#0F0';
-    ctx.font = fontSize + 'px monospace';
-
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0F0'; ctx.font = '15px monospace';
     for (let i = 0; i < rainDrops.length; i++) {
-        const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-        ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-        if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) rainDrops[i] = 0;
+        const text = String.fromCharCode(0x30A0 + Math.random() * 96);
+        ctx.fillText(text, i * 20, rainDrops[i] * 20);
+        if (rainDrops[i] * 20 > canvas.height && Math.random() > 0.975) rainDrops[i] = 0;
         rainDrops[i]++;
     }
 }
 setInterval(drawMatrix, 50);
 
 /* =========================================
-   PART 2: AUDIO SYNTHESIZER
+   PART 2: AUDIO SYSTEM
    ========================================= */
 class SoundSys {
-    constructor() {
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        this.muted = false;
+    constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); this.muted = false; }
+    playTone(freq, type, duration) {
+        if (this.muted) return; if (this.ctx.state === 'suspended') this.ctx.resume();
+        const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + duration);
     }
-
-    toggleMute() {
-        this.muted = !this.muted;
-        return this.muted;
-    }
-
-    playTone(freq, type, duration, vol = 0.1) {
-        if (this.muted) return;
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = type; 
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + duration);
-    }
-
-    playStart() { this.playTone(400, 'square', 0.1); setTimeout(() => this.playTone(600, 'square', 0.1), 100); }
-    playCorrect() { this.playTone(800, 'sine', 0.1); setTimeout(() => this.playTone(1200, 'sine', 0.2), 80); }
-    playWrong() { this.playTone(150, 'sawtooth', 0.2); setTimeout(() => this.playTone(100, 'sawtooth', 0.3), 100); }
-    playType() { this.playTone(600 + Math.random()*200, 'triangle', 0.03, 0.05); }
-    playWin() { [400, 500, 600, 800, 1000].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.2), i*150)); }
+    playStart() { this.playTone(400, 'square', 0.1); }
+    playCorrect() { this.playTone(800, 'sine', 0.1); }
+    playWrong() { this.playTone(150, 'sawtooth', 0.2); }
+    playWin() { [400, 600, 800].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.2), i*150)); }
+    playBonus() { [600, 800, 1200].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.1), i*100)); }
 }
 
 /* =========================================
-   PART 3: PARTICLE SYSTEM
-   ========================================= */
-function spawnParticles(x, y) {
-    const container = document.getElementById('particles-container');
-    if(!container) return; 
-    const count = 15; 
-    for(let i=0; i<count; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = x + 'px';
-        p.style.top = y + 'px';
-        const tx = (Math.random() - 0.5) * 200;
-        const ty = (Math.random() - 0.5) * 200;
-        p.style.setProperty('--tx', `${tx}px`);
-        p.style.setProperty('--ty', `${ty}px`);
-        p.style.background = Math.random() > 0.5 ? '#0f0' : '#fff';
-        container.appendChild(p);
-        setTimeout(() => p.remove(), 500); 
-    }
-}
-
-/* =========================================
-   PART 4: GAME ENGINE
+   PART 3: GAME ENGINE (UPDATED)
    ========================================= */
 class GameEngine {
     constructor() {
         this.playerName = "PLAYER";
-        this.score = 0;
-        this.hp = 100;
+        this.currentMode = "SURVIVAL";
         this.selectedTime = 60;
-        this.timer = 60;
-        this.combo = 0;
-        this.hints = 3;
-        this.potions = 3;
-        this.skips = 3;
-        this.currentQ = null;
-        this.isPlaying = false;
-        this.timerInterval = null;
+        this.winScore = 800;
+        this.score = 0; this.hp = 100; this.timer = 60;
+        this.consecutiveWins = 0; // ตัวนับตอบถูกติดกัน
+        this.questionPool = []; 
         this.sessionHistory = [];
-        this.leaderboard = JSON.parse(localStorage.getItem('pythonHunter_leaderboard')) || [];
         this.sound = new SoundSys();
+        this.leaderboard = JSON.parse(localStorage.getItem('pythonHunter_lb')) || [];
 
         this.ui = {
-            hpBar: document.getElementById('player-hp-bar'),
-            score: document.getElementById('score-display'),
-            timer: document.getElementById('timer-display'),
-            code: document.getElementById('code-display'),
-            mission: document.getElementById('mission-text'),
-            input: document.getElementById('player-input'),
-            combo: document.getElementById('combo-display'),
-            monster: document.getElementById('monster-sprite'),
-            btnHint: document.getElementById('btn-hint'),
-            btnPotion: document.getElementById('btn-potion'),
-            btnSkip: document.getElementById('btn-skip'),
-            reviewBox: document.getElementById('review-box'),
-            soundBtn: document.getElementById('sound-toggle'),
-            nameInput: document.getElementById('player-name-input'),
-            currentPlayer: document.getElementById('current-player-display'),
-            leaderboardBody: document.getElementById('leaderboard-body'),
-            topPlayerName: document.getElementById('top-player-name'),
-            menuHighScore: document.getElementById('menu-highscore'),
-            finalName: document.getElementById('final-name'),
-            finalScore: document.getElementById('final-score'),
-            finalRank: document.getElementById('final-rank'),
-            scenes: {
-                menu: document.getElementById('menu-scene'),
-                game: document.getElementById('game-scene'),
-                over: document.getElementById('gameover-scene'),
-                tutorial: document.getElementById('tutorial-scene'),
-                leaderboard: document.getElementById('leaderboard-scene'),
-                archive: document.getElementById('archive-scene') // เพิ่มหน้า Archive
-            }
+            scenes: { menu: document.getElementById('menu-scene'), mission: document.getElementById('mission-select-scene'), game: document.getElementById('game-scene'), over: document.getElementById('gameover-scene'), leaderboard: document.getElementById('leaderboard-scene'), archive: document.getElementById('archive-scene') },
+            input: document.getElementById('player-input'), code: document.getElementById('code-display'), qText: document.getElementById('question-text-display'), score: document.getElementById('score-display'), timer: document.getElementById('timer-display'), hpBar: document.getElementById('player-hp-bar'),
+            monster: document.getElementById('monster-sprite'), damageText: document.getElementById('damage-text'), comboDisplay: document.getElementById('combo-display'),
+            finalName: document.getElementById('final-name'), finalScore: document.getElementById('final-score'), finalMode: document.getElementById('final-mode'), reviewBox: document.getElementById('review-box'), endTitle: document.getElementById('end-title')
         };
 
         this.updateLeaderboardDisplay();
-        this.ui.input.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.checkAnswer(); else this.sound.playType(); });
-        this.ui.input.addEventListener('focus', () => { setTimeout(() => { this.ui.input.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300); });
+        document.getElementById('player-input').addEventListener('keydown', (e) => { if(e.key==='Enter') this.checkAnswer(); });
         document.getElementById('attack-btn').addEventListener('click', () => this.checkAnswer());
-        this.ui.soundBtn.addEventListener('click', () => {
-            const isMuted = this.sound.toggleMute();
-            this.ui.soundBtn.innerText = isMuted ? "🔇 OFF" : "🔊 ON";
-            this.ui.soundBtn.classList.toggle('sound-off', isMuted);
-        });
+        document.getElementById('sound-toggle').addEventListener('click', (e) => { this.sound.muted = !this.sound.muted; e.target.innerText = this.sound.muted ? "🔇 OFF" : "🔊 ON"; });
     }
 
-    setTime(seconds) {
-        this.selectedTime = seconds;
-        document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+    setTime(s) {
+        this.selectedTime = s;
         this.sound.playStart();
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+        [...document.querySelectorAll('.time-btn')].find(b => b.innerText.includes(s)).classList.add('active');
+        
+        // --- NEW WIN CONDITIONS ---
+        if(s === 60) this.winScore = 800;       // 60s -> 800 pts
+        else if(s === 120) this.winScore = 1500; // 120s -> 1500 pts
+        else if(s === 180) this.winScore = 2000; // 180s -> 2000 pts
     }
 
-    validateAndStart() {
-        const name = this.ui.nameInput.value.trim();
-        if (!name) { alert("⚠️ PLEASE IDENTIFY YOURSELF!"); this.ui.nameInput.focus(); return; }
-        this.playerName = name.toUpperCase();
-        this.start();
+    goToMissionSelect() {
+        if(!document.getElementById('player-name-input').value.trim()) { alert("ใส่ชื่อก่อนครับ!"); return; }
+        this.playerName = document.getElementById('player-name-input').value.trim().toUpperCase();
+        this.switchScene('mission');
     }
 
-    start() {
-        this.sound.playStart();
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    startMission(mode) {
+        this.currentMode = mode;
         this.switchScene('game');
-        this.resetStats();
+        this.score = 0; this.hp = 100; this.timer = this.selectedTime;
+        this.consecutiveWins = 0;
+        this.sessionHistory = [];
+        
+        // --- SURVIVAL LOGIC (Level 4 & 5 Only) ---
+        let rawQuestions = [];
+        if (mode === 'SURVIVAL') {
+            rawQuestions = QUESTION_DATABASE.filter(q => q.level >= 4);
+        } else {
+            rawQuestions = QUESTION_DATABASE.filter(q => q.mode === mode);
+        }
+        if(rawQuestions.length === 0) rawQuestions = QUESTION_DATABASE;
+        
+        this.questionPool = this.shuffleArray([...rawQuestions]); 
+
+        this.ui.score.innerText = "0"; this.ui.timer.innerText = this.timer; this.ui.hpBar.style.width = "100%";
+        document.getElementById('current-player-display').innerText = this.playerName;
+        document.getElementById('mode-display').innerText = mode;
+        this.ui.comboDisplay.innerText = "";
+        
         this.isPlaying = true;
         this.nextTurn();
         this.startTimer();
-        this.ui.input.focus();
-    }
-
-    showTutorial() { this.switchScene('tutorial'); }
-    showLeaderboard() { this.renderLeaderboardTable(); this.switchScene('leaderboard'); }
-    showArchive() { this.switchScene('archive'); } // ฟังก์ชันเปิดหน้า Archive
-
-    switchScene(sceneName) {
-        Object.values(this.ui.scenes).forEach(el => { if(el) { el.classList.add('hidden'); el.classList.remove('active'); } });
-        if(this.ui.scenes[sceneName]) { this.ui.scenes[sceneName].classList.remove('hidden'); this.ui.scenes[sceneName].classList.add('active'); }
-    }
-
-    resetStats() {
-        this.score = 0;
-        this.hp = 100;
-        this.timer = this.selectedTime;
-        this.combo = 0;
-        this.hints = 3;
-        this.potions = 3;
-        this.skips = 3;
-        this.sessionHistory = [];
-        this.ui.currentPlayer.innerText = this.playerName;
-        this.ui.btnHint.innerText = `HINT(-50)`;
-        this.ui.btnPotion.innerText = `HP(${this.potions})`;
-        this.ui.btnSkip.innerText = `SKIP(-100)`;
-        this.ui.btnHint.disabled = false;
-        this.ui.btnPotion.disabled = false;
-        this.ui.btnSkip.disabled = false;
-        this.updateHUD();
-    }
-
-    startTimer() {
-        clearInterval(this.timerInterval);
-        this.timerInterval = setInterval(() => {
-            if (!this.isPlaying) return;
-            this.timer--;
-            this.updateHUD();
-            if (this.timer <= 0) this.gameOver();
-        }, 1000);
+        setTimeout(() => this.ui.input.focus(), 500);
     }
 
     nextTurn() {
-        let pool;
-        if (this.score < 500) pool = QUESTION_DATABASE.filter(q => q.level <= 2);
-        else if (this.score < 1500) pool = QUESTION_DATABASE.filter(q => q.level <= 3);
-        else pool = QUESTION_DATABASE.filter(q => q.level >= 3);
-        if (!pool || !pool.length) pool = QUESTION_DATABASE;
-        this.currentQ = pool[Math.floor(Math.random() * pool.length)];
+        if(this.questionPool.length === 0) {
+            let rawQuestions = (this.currentMode === 'SURVIVAL') ? QUESTION_DATABASE.filter(q => q.level >= 4) : QUESTION_DATABASE.filter(q => q.mode === this.currentMode);
+            this.questionPool = this.shuffleArray([...rawQuestions]);
+        }
+        this.currentQ = this.questionPool.pop();
         this.sessionHistory.push(this.currentQ);
-        this.typewriterEffect(this.currentQ.code, this.ui.code);
-        const typeTag = `<span style="color:#0f0;">[TYPE: ${this.currentQ.type}]</span>`;
-        this.ui.mission.innerHTML = `${typeTag} ${this.currentQ.text}`;
-        this.ui.input.value = '';
-        this.ui.monster.classList.remove('hit');
-        if(this.currentQ.level >= 4) this.ui.monster.classList.add('boss-mode');
-        else this.ui.monster.classList.remove('boss-mode');
-    }
 
-    typewriterEffect(text, element) {
-        element.innerHTML = '';
-        let i = 0; const speed = 10; 
-        const type = () => { if (i < text.length) { element.innerHTML += text.charAt(i); i++; setTimeout(type, speed); } };
+        this.ui.qText.innerText = this.currentQ.text;
+        this.ui.code.innerHTML = "";
+        let i = 0; const txt = this.currentQ.code; 
+        const type = () => { if(i < txt.length) { this.ui.code.innerHTML += txt.charAt(i); i++; setTimeout(type, 15); } };
         type();
+        this.ui.input.value = "";
     }
 
     checkAnswer() {
         if (!this.isPlaying) return;
-        const playerAns = this.ui.input.value.trim();
-        if (playerAns.toLowerCase() === this.currentQ.ans.toLowerCase()) { this.handleSuccess(); } else { this.handleFail(); }
-        this.updateHUD();
+        const ans = this.ui.input.value.trim().toLowerCase();
+        if (ans === this.currentQ.ans.toLowerCase()) {
+            this.score += 150;
+            this.ui.score.innerText = this.score;
+            this.sound.playCorrect();
+            
+            // --- TIME BONUS LOGIC ---
+            this.consecutiveWins++;
+            if (this.consecutiveWins === 3) {
+                this.timer += 10;
+                this.sound.playBonus();
+                this.showFloatingText("+10s TIME BONUS!", "#ffff00");
+                this.consecutiveWins = 0; // Reset counter
+            } else {
+                this.showFloatingText("+150", "#00ff00");
+            }
+
+            this.ui.input.style.borderColor = "#0f0";
+            setTimeout(() => this.ui.input.style.borderColor = "var(--neon-green)", 300);
+            this.ui.monster.style.filter = "brightness(2) drop-shadow(0 0 10px red)";
+            setTimeout(() => this.ui.monster.style.filter = "none", 200);
+
+            if (this.score >= this.winScore) {
+                this.gameWin();
+                return;
+            }
+            setTimeout(() => this.nextTurn(), 500);
+        } else {
+            this.consecutiveWins = 0; // Reset Combo
+            this.hp -= 20;
+            this.ui.hpBar.style.width = this.hp + "%";
+            this.sound.playWrong();
+            this.ui.input.value = "";
+            if(this.hp <= 0) this.gameOver();
+        }
     }
 
-    handleSuccess() {
-        this.sound.playCorrect();
-        this.combo++;
-        const bonus = (this.combo * 10) + (this.currentQ.level * 20);
-        this.score += 100 + bonus;
-        this.showDamage(`+${100 + bonus}`, 'critical');
-        this.ui.input.classList.add('valid');
-        setTimeout(() => this.ui.input.classList.remove('valid'), 200);
-        const mRect = this.ui.monster.getBoundingClientRect();
-        spawnParticles(mRect.left + mRect.width/2, mRect.top + mRect.height/2);
-        this.ui.monster.classList.add('hit');
-        setTimeout(() => this.ui.monster.classList.remove('hit'), 300);
-        setTimeout(() => this.nextTurn(), 400);
-    }
-
-    handleFail() {
-        this.sound.playWrong();
-        this.combo = 0;
-        this.hp -= 20;
-        this.showDamage("-20 HP", 'danger');
-        document.body.classList.add('shake');
-        setTimeout(() => document.body.classList.remove('shake'), 300);
-        this.ui.input.value = '';
-        this.ui.input.focus();
-        if (this.hp <= 0) this.gameOver();
+    showFloatingText(msg, color) {
+        this.ui.damageText.innerText = msg;
+        this.ui.damageText.style.color = color;
+        this.ui.damageText.style.opacity = 1; 
+        this.ui.damageText.style.top = "-50px";
+        setTimeout(() => { this.ui.damageText.style.opacity = 0; this.ui.damageText.style.top = "-20px"; }, 800);
     }
 
     useHint() {
-        if (this.hints > 0) {
-            this.sound.playStart();
-            this.hints--;
-            this.score = Math.max(0, this.score - 50);
-            this.ui.btnHint.innerText = `HINT(${this.hints})`;
+        if(this.hints > 0) {
+            this.hints--; this.score = Math.max(0, this.score - 50);
             this.ui.input.value = this.currentQ.ans.substring(0, 1);
-            this.ui.input.focus();
-            this.showDamage("-50 SCORE", 'danger');
-            this.updateHUD();
-            if (this.hints === 0) this.ui.btnHint.disabled = true;
+            document.getElementById('btn-hint').innerText = `HINT(${this.hints})`;
         }
     }
-
     usePotion() {
-        if (this.potions > 0 && this.hp < 100) {
-            this.sound.playStart();
-            this.potions--;
-            this.hp = Math.min(100, this.hp + 30);
-            this.ui.btnPotion.innerText = `HP(${this.potions})`;
-            this.showDamage("+30 HP", 'critical');
-            this.updateHUD();
-            if (this.potions === 0) this.ui.btnPotion.disabled = true;
+        if(this.potions > 0 && this.hp < 100) {
+            this.potions--; this.hp = Math.min(100, this.hp + 30);
+            document.getElementById('btn-potion').innerText = `HP(${this.potions})`;
+            this.ui.hpBar.style.width = this.hp + "%";
         }
     }
-
     useSkip() {
-        if (this.skips > 0) {
-            this.sound.playStart();
-            this.skips--;
-            this.score = Math.max(0, this.score - 100);
-            this.ui.btnSkip.innerText = `SKIP(${this.skips})`;
-            this.showDamage("SKIPPED (-100)", 'danger');
+        if(this.skips > 0) {
+            this.skips--; this.score = Math.max(0, this.score - 100);
+            document.getElementById('btn-skip').innerText = `SKIP(${this.skips})`;
+            this.consecutiveWins = 0; // Reset combo on skip
             this.nextTurn();
-            this.updateHUD();
-            if (this.skips === 0) this.ui.btnSkip.disabled = true;
         }
     }
 
-    showDamage(text, type) {
-        const dmg = document.getElementById('damage-text');
-        dmg.innerText = text;
-        dmg.className = 'damage-text ' + type;
-        dmg.style.animation = 'none';
-        dmg.offsetHeight; 
-        dmg.style.animation = 'floatUp 1s ease-out';
-    }
-
-    updateHUD() {
-        this.ui.score.innerText = this.score.toString().padStart(5, '0');
-        this.ui.timer.innerText = this.timer;
-        this.ui.hpBar.style.width = this.hp + '%';
-        this.ui.hpBar.style.background = this.hp > 50 ? '#0f0' : (this.hp > 20 ? '#ff0' : '#f00');
-        if(this.combo > 1) { this.ui.combo.classList.remove('hidden'); this.ui.combo.innerText = `x${this.combo}`; } else { this.ui.combo.classList.add('hidden'); }
-    }
-
-    saveScoreToLeaderboard() {
-        this.leaderboard.push({ name: this.playerName, score: this.score, timeMode: this.selectedTime });
-        this.leaderboard.sort((a, b) => b.score - a.score);
-        this.leaderboard = this.leaderboard.slice(0, 10);
-        localStorage.setItem('pythonHunter_leaderboard', JSON.stringify(this.leaderboard));
-    }
-
-    updateLeaderboardDisplay() {
-        if (this.leaderboard.length > 0) {
-            this.ui.topPlayerName.innerText = this.leaderboard[0].name;
-            this.ui.menuHighScore.innerText = this.leaderboard[0].score;
-        }
-    }
-
-    renderLeaderboardTable() {
-        this.ui.leaderboardBody.innerHTML = '';
-        this.leaderboard.forEach((player, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${index + 1}</td><td>${player.name}</td><td style="color:#0f0;">${player.score}</td><td>${player.timeMode}s</td>`;
-            this.ui.leaderboardBody.appendChild(row);
-        });
+    gameWin() {
+        this.isPlaying = false;
+        clearInterval(this.timerInterval);
+        this.sound.playWin();
+        this.saveScore();
+        this.ui.endTitle.innerText = "MISSION ACCOMPLISHED";
+        this.ui.endTitle.className = "glitch-title win-text";
+        this.showEndScreen();
     }
 
     gameOver() {
-        this.sound.playWin();
         this.isPlaying = false;
         clearInterval(this.timerInterval);
-        this.saveScoreToLeaderboard();
-        this.updateLeaderboardDisplay();
+        this.saveScore();
+        this.ui.endTitle.innerText = "SESSION END";
+        this.ui.endTitle.className = "glitch-title danger-text";
+        this.showEndScreen();
+    }
+
+    showEndScreen() {
         this.ui.finalName.innerText = this.playerName;
         this.ui.finalScore.innerText = this.score;
-        let rank = "BEGINNER";
-        if(this.score > 1000) rank = "INTERMEDIATE";
-        if(this.score > 3000) rank = "PYTHON MASTER";
-        this.ui.finalRank.innerText = rank;
-        this.generateReview(); 
+        this.ui.finalMode.innerText = this.currentMode;
+        this.ui.reviewBox.innerHTML = "";
+        this.sessionHistory.forEach((q, i) => {
+            this.ui.reviewBox.innerHTML += `
+                <div class="review-item">
+                    <div style="color:#fff;">${i+1}. ${q.text}</div>
+                    <div style="color:#0ff; font-family:monospace;">${q.code}</div>
+                    <div style="color:#0f0;">Ans: ${q.ans}</div>
+                    <div style="color:#aaa; font-style:italic; font-size:0.8rem;">💡 ${q.explanation}</div>
+                </div>`;
+        });
         this.switchScene('over');
     }
 
-    generateReview() {
-        this.ui.reviewBox.innerHTML = ''; 
-        this.sessionHistory.forEach((q, index) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'review-item';
-            itemDiv.innerHTML = `
-                <div style="color: #fff; margin-bottom: 2px;">${index + 1}. ${q.text}</div>
-                <div class="review-code">${q.code.replace('____', '<span style="color:#f00">____</span>')}</div>
-                <div style="color:#0f0; font-size:0.8rem;">Ans: ${q.ans}</div>
-                <div style="color:#aaa; font-size:0.8rem; margin-top:5px; font-style:italic;">💡 ${q.explanation}</div>
-            `;
-            this.ui.reviewBox.appendChild(itemDiv);
-        });
+    saveScore() {
+        this.leaderboard.push({ name: this.playerName, score: this.score, mode: this.currentMode });
+        this.leaderboard.sort((a,b) => b.score - a.score);
+        this.leaderboard = this.leaderboard.slice(0, 10);
+        localStorage.setItem('pythonHunter_lb', JSON.stringify(this.leaderboard));
+        this.updateLeaderboardDisplay();
+    }
+
+    updateLeaderboardDisplay() {
+        if(this.leaderboard.length > 0) document.getElementById('top-player-name').innerText = this.leaderboard[0].name;
+    }
+
+    showLeaderboard() {
+        document.getElementById('leaderboard-body').innerHTML = this.leaderboard.map((p,i) => `<tr><td>${i+1}</td><td>${p.name}</td><td>${p.score}</td><td>${p.mode}</td></tr>`).join('');
+        this.switchScene('leaderboard');
+    }
+    showArchive() { this.switchScene('archive'); }
+    switchScene(name) {
+        Object.values(this.ui.scenes).forEach(s => { s.classList.remove('active'); s.classList.add('hidden'); });
+        this.ui.scenes[name].classList.remove('hidden'); setTimeout(() => this.ui.scenes[name].classList.add('active'), 10);
+    }
+    startTimer() {
+        clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(() => {
+            if(!this.isPlaying) return;
+            this.timer--; this.ui.timer.innerText = this.timer;
+            if(this.timer <= 0) this.gameOver();
+        }, 1000);
     }
 }
-
 const game = new GameEngine();
