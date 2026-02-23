@@ -163,7 +163,7 @@
                                 <li>⏩ SKIP: ข้ามข้อนั้น (-100 คะแนน)</li>
                             </ul>
                         </li>
-                        <li><strong>Survival Mode:</strong> โหมดโหดหิน สุ่มเฉพาะโจทย์ยาก (Level 4-5) เท่านั้น</li>
+                        <li><strong>Survival Mode:</strong> โหมดโหดหิน สุ่มเฉพาะโจทย์ระดับ <span style="color:#f00;">ข้อยาก</span> และ <span style="color:#f00;">โหดพิเศษ</span> (Level 6-7) เท่านั้น</li>
                     </ul>
                 </div>
 
@@ -180,7 +180,7 @@
                         <li><span class="kw">float</span>(...) : ฟังก์ชันแปลงข้อมูลให้เป็นเลขทศนิยม (Floating Point)</li>
                         <li><span class="kw">str</span>(...) : ฟังก์ชันแปลงข้อมูลให้เป็นข้อความ (String) มักใช้เมื่อต้องการนำตัวเลขไปเชื่อมต่อกับข้อความ</li>
                         <li><span class="kw">type</span>(...) : ใช้ตรวจสอบชนิดของข้อมูลว่าเป็น class อะไร</li>
-                        <li><span class="kw">#</span> (Hash) : ใช้สำหรับเขียน Comment เพื่ออธิบายโค้ด โปรแกรมจะข้ามบรรทัดนี้ไป</li>
+                        <li><span class="kw">del</span> : ลบตัวแปรออกจากหน่วยความจำ</li>
                         <li><span class="kw">True / False</span> : ค่าความจริง (Boolean) ต้องขึ้นต้นด้วยตัวพิมพ์ใหญ่เสมอ</li>
                     </ul>
                 </div>
@@ -199,8 +199,8 @@
                         <li><span class="kw">!=</span> : เครื่องหมาย "ไม่เท่ากับ" (Not Equal)</li>
                         <li><span class="kw">and</span> : ตรรกะ "และ" (เงื่อนไขต้องเป็นจริงทั้งคู่ ผลลัพธ์ถึงจะเป็นจริง)</li>
                         <li><span class="kw">or</span> : ตรรกะ "หรือ" (ขอแค่เงื่อนไขใดอันหนึ่งจริง ผลลัพธ์ก็จะเป็นจริง)</li>
-                        <li><span class="kw">not</span> : ตรรกะ "นิเสธ" (กลับค่าความจริง: จริง->เท็จ, เท็จ->จริง)</li>
-                        <li><span class="kw">in</span> : ใช้ตรวจสอบสมาชิกในกลุ่ม เช่น <code>'a' in ['a','b']</code> (คืนค่า True)</li>
+                        <li><span class="kw">is</span> / <span class="kw">is not</span> : ใช้ตรวจสอบ Object หรือค่า None อย่างปลอดภัย</li>
+                        <li><span class="kw">isinstance</span>(obj, type) : ใช้ตรวจสอบว่าข้อมูลเป็นชนิดนั้นหรือไม่</li>
                     </ul>
                 </div>
 
@@ -227,14 +227,12 @@
                     <ul class="archive-list">
                         <li><strong>List [...]</strong> : เก็บข้อมูลเรียงต่อกันเป็นลำดับ แก้ไขได้ เข้าถึงด้วย Index (เริ่มที่ 0)</li>
                         <li>list.<span class="kw">append</span>(x) : เพิ่มข้อมูล x ต่อท้าย List</li>
-                        <li>list.<span class="kw">remove</span>(x) : ค้นหาและลบข้อมูล x ตัวแรกที่เจอออกจาก List</li>
                         <li>list.<span class="kw">pop</span>() : ดึงข้อมูลตัวสุดท้ายออกจาก List (ลบออกและคืนค่ามาให้ใช้)</li>
-                        <li>list.<span class="kw">insert</span>(i, x) : แทรกข้อมูล x ลงในตำแหน่ง index ที่ i</li>
-                        <li>list.<span class="kw">sort</span>() : เรียงลำดับข้อมูลใน List (จากน้อยไปมาก)</li>
-                        <li><span class="kw">len</span>(obj) : ฟังก์ชันสากล ใช้หาความยาวหรือจำนวนสมาชิกของ List หรือ String</li>
+                        <li>list.<span class="kw">sort</span>() : เรียงลำดับข้อมูลใน List</li>
                         <li><strong>Dictionary {key: value}</strong> : เก็บข้อมูลแบบคู่ ไม่เรียงลำดับ เข้าถึงข้อมูลด้วย Key</li>
-                        <li>dict.<span class="kw">get</span>(key) : วิธีดึงค่าที่ปลอดภัยกว่า <code>dict[key]</code> (ถ้าไม่เจอ Key จะคืนค่า None ไม่ Error)</li>
                         <li>dict.<span class="kw">keys</span>() : ดึงรายชื่อ Key ทั้งหมดออกมาเป็น List</li>
+                        <li>dict.<span class="kw">items</span>() : ดึงคู่ Key และ Value มาใช้ร่วมกับ Loop</li>
+                        <li><strong>Set (...)</strong> : โครงสร้างข้อมูลที่ไม่เก็บค่าซ้ำ ใช้เมธอด <span class="kw">add()</span> สำหรับเพิ่ม</li>
                     </ul>
                 </div>
 
@@ -248,10 +246,9 @@
                         <li><span class="kw">return</span> : ส่งค่าผลลัพธ์ออกจากฟังก์ชัน และจบการทำงานของฟังก์ชันนั้นทันที</li>
                         <li><span class="kw">import</span> ... : นำเข้า Module หรือ Library ภายนอกมาใช้ เช่น math, random</li>
                         <li><span class="kw">as</span> : ใช้ตั้งชื่อเล่น (Alias) ให้โมดูล เช่น <code>import numpy as np</code></li>
-                        <li><span class="kw">max</span>(...) / <span class="kw">min</span>(...) : หาค่ามากที่สุด / น้อยที่สุด ในกลุ่มข้อมูล</li>
-                        <li><span class="kw">abs</span>(...) : หาค่าสัมบูรณ์ (Absolute) แปลงเลขลบเป็นบวก</li>
-                        <li><span class="kw">round</span>(...) : ปัดเศษทศนิยมตามหลักคณิตศาสตร์</li>
-                        <li><span class="kw">*args</span> : ใช้รับพารามิเตอร์จำนวนมากเข้ามาในฟังก์ชัน (เก็บเป็น Tuple)</li>
+                        <li><span class="kw">global</span> : อนุญาตให้ฟังก์ชันแก้ตัวแปรภายนอกแบบ Global ได้</li>
+                        <li><span class="kw">*args</span> : ใช้รับพารามิเตอร์จำนวนมากเข้ามาในฟังก์ชันเป็น Tuple</li>
+                        <li><span class="kw">**kwargs</span> : ใช้รับพารามิเตอร์แบบ Keyword แบบเป็น Dictionary</li>
                     </ul>
                 </div>
 
@@ -262,14 +259,27 @@
                     </p>
                     <ul class="archive-list">
                         <li><span class="kw">class</span> Name: : การประกาศสร้างแม่พิมพ์ (Blueprint) สำหรับสร้างวัตถุ</li>
-                        <li><span class="kw">object</span> : วัตถุจริงที่ถูกสร้างขึ้นมาจาก Class (Instance)</li>
                         <li><span class="kw">__init__</span> : (Constructor) เมธอดพิเศษที่ทำงานอัตโนมัติเมื่อสร้าง Object ใหม่ มักใช้กำหนดค่าเริ่มต้น</li>
                         <li><span class="kw">self</span> : ตัวแปรที่ใช้แทน "ตัวเอง" (Object นั้นๆ) ใช้เพื่อระบุว่าเป็นตัวแปรของวัตถุนี้ ไม่ใช่ตัวแปรข้างนอก</li>
-                        <li><span class="kw">method</span> : ฟังก์ชันที่ประกาศอยู่ภายใน Class (พฤติกรรมของวัตถุ)</li>
-                        <li><span class="kw">isinstance</span>(obj, class) : เช็คว่าวัตถุนี้ ถูกสร้างมาจากคลาสนี้หรือไม่</li>
-                        <li><span class="kw">__str__</span> : เมธอดพิเศษที่ใช้กำหนดว่าจะแสดงผลข้อความอย่างไร เมื่อสั่ง <code>print(object)</code></li>
-                        <li><strong>Inheritance</strong> : การสืบทอดคุณสมบัติจากคลาสแม่สู่คลาสลูก <code>class Child(Parent):</code></li>
+                        <li><span class="kw">@classmethod</span> / <span class="kw">@staticmethod</span> : Decorator เพื่อสร้างเมธอดของคลาสและเมธอดอิสระ</li>
+                        <li><strong>Inheritance</strong> : การสืบทอดคุณสมบัติจากคลาสแม่สู่คลาสลูก <code>class Child(Parent):</code> ใช้ <span class="kw">super()</span> เรียกเมธอดของคลาสแม่</li>
                         <li><span class="kw">pass</span> : คำสั่ง "ผ่าน" (ไม่ทำอะไรเลย) ใช้เขียนขัดตาทัพในโครงสร้างที่ว่างเปล่าเพื่อกัน Error</li>
+                    </ul>
+                </div>
+
+                <div class="archive-section">
+                    <h3 class="archive-head">7. ADVANCED (ระดับยาก & โหดพิเศษ)</h3>
+                    <p class="archive-desc">
+                        เนื้อหาสำหรับ SURVIVAL MODE ทักษะระดับสูงที่ถูกใช้งานในการเขียน Python แบบโปร
+                    </p>
+                    <ul class="archive-list">
+                        <li><strong>Comprehension</strong> : การเขียนสร้าง List, Dict หรือ Set ในบรรทัดเดียว เช่น <code>[x for x in range(5)]</code></li>
+                        <li><span class="kw">lambda</span> : ฟังก์ชันขนาดสั้นแบบไม่ตั้งชื่อ (Anonymous Function) <code>square = lambda x: x*x</code></li>
+                        <li><span class="kw">yield</span> : ใช้สร้าง <strong>Generator</strong> แทนที่ return เพื่อประหยัดหน่วยความจำในการวนลูป</li>
+                        <li><span class="kw">nonlocal</span> : เข้าถึงหรือแก้ไขตัวแปรที่อยู่ในขอบเขตของฟังก์ชันชั้นนอก (Enclosing Scope)</li>
+                        <li><span class="kw">deepcopy</span> : การใช้คัดลอกข้อมูลซ้อนหลายชั้นแบบปลอดภัยตัดขาดจากต้นฉบับ</li>
+                        <li><span class="kw">:=</span> (Walrus Operator) : อนุญาตให้ทำ Assignment ภายใน Expression เลย เช่น <code>while (n := input()) != 'q':</code></li>
+                        <li><strong>Decorator</strong> : การใช้เครื่องหมาย <code>@</code> เพื่อครอบฟังก์ชันเพื่อเพิ่มการทำงานบางอย่าง</li>
                     </ul>
                 </div>
 

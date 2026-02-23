@@ -39,7 +39,7 @@ class SoundSys {
 }
 
 /* =========================================
-   PART 3: GAME ENGINE (FIXED ITEM USAGE)
+   PART 3: GAME ENGINE
    ========================================= */
 class GameEngine {
     constructor() {
@@ -77,7 +77,6 @@ class GameEngine {
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         [...document.querySelectorAll('.time-btn')].find(b => b.innerText.includes(s)).classList.add('active');
         
-        // --- Set Difficulty & Items ---
         if(s === 60) {
             this.winScore = 800;
             this.hints = 1; this.potions = 1; this.skips = 1;
@@ -108,27 +107,24 @@ class GameEngine {
         this.currentMode = mode;
         this.switchScene('game');
         
-        // Reset Stats (ใช้ค่า Item ที่ตั้งไว้จาก setTime)
         this.score = 0; this.hp = 100; this.timer = this.selectedTime;
         this.consecutiveWins = 0;
         this.sessionHistory = [];
         
-        // Reset Item Counts (ตามเวลาที่เลือก)
         if(this.timer === 60) { this.hints = 1; this.potions = 1; this.skips = 1; }
         else if(this.timer === 120) { this.hints = 2; this.potions = 2; this.skips = 2; }
         else { this.hints = 3; this.potions = 3; this.skips = 3; }
 
-        let rawQuestions = (mode === 'SURVIVAL') ? QUESTION_DATABASE.filter(q => q.level >= 4) : QUESTION_DATABASE.filter(q => q.mode === mode);
+        // ดึงเฉพาะโจทย์ Level 6 และ 7 สำหรับโหมด Survival เพื่อความโหดพิเศษ
+        let rawQuestions = (mode === 'SURVIVAL') ? QUESTION_DATABASE.filter(q => q.level >= 6) : QUESTION_DATABASE.filter(q => q.mode === mode);
         if(rawQuestions.length === 0) rawQuestions = QUESTION_DATABASE;
         this.questionPool = this.shuffleArray([...rawQuestions]); 
 
-        // UI Reset
         this.ui.score.innerText = "0"; this.ui.timer.innerText = this.timer; this.ui.hpBar.style.width = "100%";
         document.getElementById('current-player-display').innerText = this.playerName;
         document.getElementById('mode-display').innerText = mode;
         this.ui.comboDisplay.innerText = "";
         
-        // Update Buttons
         this.ui.btnHint.disabled = false; this.ui.btnPotion.disabled = false; this.ui.btnSkip.disabled = false;
         this.ui.btnHint.innerText = `HINT (${this.hints})`;
         this.ui.btnPotion.innerText = `HP (${this.potions})`;
@@ -142,7 +138,7 @@ class GameEngine {
 
     nextTurn() {
         if(this.questionPool.length === 0) {
-            let rawQuestions = (this.currentMode === 'SURVIVAL') ? QUESTION_DATABASE.filter(q => q.level >= 4) : QUESTION_DATABASE.filter(q => q.mode === this.currentMode);
+            let rawQuestions = (this.currentMode === 'SURVIVAL') ? QUESTION_DATABASE.filter(q => q.level >= 6) : QUESTION_DATABASE.filter(q => q.mode === this.currentMode);
             this.questionPool = this.shuffleArray([...rawQuestions]);
         }
         this.currentQ = this.questionPool.pop();
@@ -202,7 +198,6 @@ class GameEngine {
         setTimeout(() => { this.ui.damageText.style.opacity = 0; this.ui.damageText.style.top = "-20px"; }, 800);
     }
 
-    // --- ITEM USAGE FUNCTIONS ---
     useHint() {
         if(this.hints > 0) {
             this.hints--; 
@@ -231,7 +226,7 @@ class GameEngine {
             this.score = Math.max(0, this.score - 100);
             this.ui.score.innerText = this.score;
             this.ui.btnSkip.innerText = `SKIP (${this.skips})`;
-            this.consecutiveWins = 0; // Reset Combo
+            this.consecutiveWins = 0; 
             if(this.skips === 0) this.ui.btnSkip.disabled = true;
             this.nextTurn();
         }
